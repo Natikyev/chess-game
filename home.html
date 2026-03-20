@@ -488,7 +488,7 @@ footer a:hover{color:var(--gold)}
 // ── Leaderboard preview ──────────────────────────────────────
 (async function(){
   try{
-    const r=await fetch('http://localhost:3001/api/leaderboard');
+    const r=await fetch('https://chess-game-xxxx.onrender.com/api/leaderboard');
     const d=await r.json();
     const rows=(d.leaderboard||[]).slice(0,8);
     const myName=(()=>{try{return JSON.parse(localStorage.getItem('chess_user')||'null')?.username}catch{return null}})();
