@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess — Leaderboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#1a1a1a;--panel:#242424;--border:#3d3d3d;--accent:#81b64c;--text:#e8e8e8;--text-dim:#8a8a8a;--win:#81b64c;--lose:#e05050}
+  body{background:var(--bg);background-image:radial-gradient(ellipse at 20% 20%,rgba(80,60,40,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(60,40,25,.3) 0%,transparent 60%);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 20px}
+  nav{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:640px;margin-bottom:30px}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent);text-decoration:none}
+  .nav-links{display:flex;gap:10px}
+  .nav-links a{color:var(--text-dim);text-decoration:none;font-size:.6rem;padding:6px 13px;border:1px solid var(--border);border-radius:5px;transition:all .15s}
+  .nav-links a:hover,.nav-links a.active{border-color:var(--accent);color:var(--accent)}
+  .page-title{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--accent);text-align:center;margin-bottom:6px}
+  .page-sub{font-size:.62rem;color:var(--text-dim);text-align:center;letter-spacing:.1em;margin-bottom:28px}
+  .podium{display:none;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:32px;width:100%;max-width:480px}
+  .podium-slot{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .podium-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;border:2px solid var(--border);background:var(--panel);position:relative}
+  .rank-1 .podium-avatar{width:64px;height:64px;border-color:#ffd700;font-size:1.7rem}
+  .rank-2 .podium-avatar{border-color:#c0c0c0}
+  .rank-3 .podium-avatar{border-color:#cd7f32}
+  .podium-crown{position:absolute;top:-18px;font-size:1.1rem}
+  .podium-name{font-size:.6rem;color:var(--text);text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .podium-rating{font-family:'Playfair Display',serif;font-size:1.1rem}
+  .rank-1 .podium-rating{color:#ffd700;font-size:1.35rem}
+  .rank-2 .podium-rating{color:#c0c0c0}
+  .rank-3 .podium-rating{color:#cd7f32}
+  .podium-block{border-radius:8px 8px 0 0;width:100%}
+  .rank-1 .podium-block{height:70px;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.25)}
+  .rank-2 .podium-block{height:50px;background:rgba(192,192,192,.08);border:1px solid rgba(192,192,192,.2)}
+  .rank-3 .podium-block{height:36px;background:rgba(205,127,50,.08);border:1px solid rgba(205,127,50,.2)}
+  .filter-bar{display:flex;gap:8px;margin-bottom:16px;width:100%;max-width:640px}
+  .filter-btn{padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s}
+  .filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(212,168,67,.08)}
+  .refresh-btn{margin-left:auto;padding:6px 14px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .lb-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:100%;max-width:640px;overflow:hidden}
+  .lb-header{display:grid;grid-template-columns:48px 1fr 80px 110px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:.55rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+  .lb-row{display:grid;grid-template-columns:48px 1fr 80px 110px;padding:11px 16px;border-bottom:1px solid rgba(74,68,63,.4);transition:background .12s;align-items:center}
+  .lb-row:last-child{border-bottom:none}
+  .lb-row:hover{background:rgba(255,255,255,.03)}
+  .lb-row.me{background:rgba(212,168,67,.07)}
+  .lb-rank{font-size:.65rem;color:var(--text-dim);font-weight:600}
+  .lb-rank.g{color:#ffd700}.lb-rank.s{color:#c0c0c0}.lb-rank.b{color:#cd7f32}
+  .lb-name-cell{display:flex;align-items:center;gap:8px;overflow:hidden}
+  .lb-avatar{width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+  .lb-username{font-size:.68rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lb-you{font-size:.5rem;color:var(--accent);background:rgba(212,168,67,.15);padding:1px 5px;border-radius:3px;margin-left:4px;flex-shrink:0}
+  .lb-rating-cell{font-family:'Playfair Display',serif;font-size:1rem;color:var(--accent)}
+  .lb-record{font-size:.58rem;color:var(--text-dim)}
+  .lb-record .w{color:var(--win)}.lb-record .l{color:var(--lose)}
+  .lb-empty{text-align:center;padding:40px 20px;color:var(--text-dim);font-size:.68rem}
+  .loading{text-align:center;padding:36px;color:var(--text-dim);font-size:.65rem}
+  .dots{display:inline-flex;gap:4px;margin-left:8px}
+  .dots span{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease infinite}
+  .dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+  @keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">♟ Chess</a>
+  <div class="nav-links">
+    <a href="chess.html">▶ Play</a>
+    <a href="leaderboard.html" class="active">🏆 Board</a>
+    <a href="profile.html">👤 Profile</a>
+    <a href="index.html" id="nav-auth">Sign In</a>
+  </div>
+</nav>
+<h1 class="page-title">🏆 Leaderboard</h1>
+<p class="page-sub">TOP PLAYERS BY ELO RATING</p>
+<div class="podium" id="podium">
+  <div class="podium-slot rank-2" id="p2"><div class="podium-avatar">♟</div><div class="podium-name" id="pn2">—</div><div class="podium-rating" id="pr2">—</div><div class="podium-block"></div></div>
+  <div class="podium-slot rank-1" id="p1"><div class="podium-avatar">♟<span class="podium-crown">👑</span></div><div class="podium-name" id="pn1">—</div><div class="podium-rating" id="pr1">—</div><div class="podium-block"></div></div>
+  <div class="podium-slot rank-3" id="p3"><div class="podium-avatar">♟</div><div class="podium-name" id="pn3">—</div><div class="podium-rating" id="pr3">—</div><div class="podium-block"></div></div>
+</div>
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All Players</button>
+  <button class="filter-btn" onclick="setFilter('active',this)">Active (5+ games)</button>
+  <button class="refresh-btn" onclick="load()">↻ Refresh</button>
+</div>
+<div class="lb-card">
+  <div class="lb-header"><div>#</div><div>Player</div><div>Rating</div><div>Record</div></div>
+  <div id="lb-body"><div class="loading">Loading<span class="dots"><span></span><span></span><span></span></span></div></div>
+</div>
+<script>
+const API='http://localhost:3001/api';
+let allData=[];
+let filterMode='all';
+const RC=['g','s','b'];
+const RI=['🥇','🥈','🥉'];
+function getMe(){const u=localStorage.getItem('chess_user');return u?JSON.parse(u).username:null}
+(function(){
+  const token=localStorage.getItem('chess_token');
+  const user=JSON.parse(localStorage.getItem('chess_user')||'null');
+  const link=document.getElementById('nav-auth');
+  if(token&&user){link.textContent='👤 '+user.username;link.href='profile.html'}
+})();
+function setFilter(mode,btn){
+  filterMode=mode;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render(allData);
+}
+function render(rows){
+  const myName=getMe();
+  const filtered=filterMode==='active'?rows.filter(r=>(r.wins+r.losses+r.draws)>=5):rows;
+  const body=document.getElementById('lb-body');
+  if(!filtered.length){body.innerHTML='<div class="lb-empty">No players yet — be the first! 🏆</div>';return}
+  const pod=document.getElementById('podium');
+  pod.style.display='flex';
+  [[1,'pn1','pr1'],[2,'pn2','pr2'],[3,'pn3','pr3']].forEach(([rank,nid,rid])=>{
+    const row=filtered[rank-1];
+    if(row){document.getElementById(nid).textContent=row.username;document.getElementById(rid).textContent='⚡'+row.rating}
+    else{document.getElementById('p'+rank).style.display='none'}
+  });
+  body.innerHTML=filtered.map((row,i)=>{
+    const isMe=row.username===myName;
+    return `<div class="lb-row ${isMe?'me':''}">
+      <div class="lb-rank ${RC[i]||''}">${RI[i]||(i+1)}</div>
+      <div class="lb-name-cell"><div class="lb-avatar">♟</div><span class="lb-username">${row.username}</span>${isMe?'<span class="lb-you">you</span>':''}</div>
+      <div class="lb-rating-cell">⚡${row.rating}</div>
+      <div class="lb-record"><span class="w">${row.wins}W</span> / <span class="l">${row.losses}L</span> / ${row.draws}D</div>
+    </div>`;
+  }).join('');
+}
+async function load(){
+  document.getElementById('lb-body').innerHTML='<div class="loading">Loading<span class="dots"><span></span><span></span><span></span></span></div>';
+  document.getElementById('podium').style.display='none';
+  try{
+    const r=await fetch(API+'/leaderboard');
+    const d=await r.json();
+    allData=d.leaderboard||[];
+    render(allData);
+  }catch{document.getElementById('lb-body').innerHTML='<div class="lb-empty">Could not connect to server. Is the backend running?</div>'}
+}
+load();
+</script>
+</body>
+</html>

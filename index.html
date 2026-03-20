@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess — Sign In</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1a1a1a; --panel: #242424; --border: #3d3d3d;
+    --accent: #81b64c; --accent-dim: #4e7a2a;
+    --text: #e8e8e8; --text-dim: #8a8a8a;
+    --win: #81b64c; --lose: #e05050;
+  }
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(80,60,40,.25) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(60,40,25,.3) 0%, transparent 60%),
+      repeating-linear-gradient(92deg, transparent, transparent 2px, rgba(0,0,0,.04) 2px, rgba(0,0,0,.04) 4px);
+    color: var(--text); font-family: 'DM Mono', monospace;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .logo { text-align: center; margin-bottom: 36px; }
+  .logo h1 { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--accent); text-shadow: 0 0 40px rgba(212,168,67,.3); }
+  .logo p  { font-size: .68rem; color: var(--text-dim); letter-spacing: .18em; margin-top: 5px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 36px 34px 32px; width: 380px; max-width: 94vw;
+    box-shadow: 0 24px 80px rgba(0,0,0,.7); animation: cardPop .28s ease;
+  }
+  @keyframes cardPop { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab {
+    flex: 1; padding: 10px; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--text-dim);
+    font-family: 'DM Mono', monospace; font-size: .7rem;
+    cursor: pointer; letter-spacing: .08em; transition: all .15s; margin-bottom: -1px;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+
+  .subtitle { font-size: .63rem; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: .58rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10px 13px;
+    background: #0f0e0d; border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text); font-family: 'DM Mono', monospace; font-size: .75rem;
+    outline: none; transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: #3a3430; }
+  .hint { font-size: .57rem; color: #5090d0; margin-top: 5px; }
+
+  .error-msg { min-height: 20px; font-size: .62rem; color: var(--lose); margin-bottom: 12px; line-height: 1.5; }
+
+  .btn-submit {
+    width: 100%; padding: 12px; background: var(--accent); color: #1a1815;
+    border: none; border-radius: 7px; font-family: 'DM Mono', monospace;
+    font-size: .72rem; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .btn-submit:hover { background: #e0b84f; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(212,168,67,.3); }
+  .btn-submit:disabled { background: #6a5522; color: var(--text-dim); cursor: default; transform: none; box-shadow: none; }
+
+  .switch { font-size: .58rem; color: var(--text-dim); text-align: center; margin-top: 16px; }
+  .switch a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .guest-btn {
+    width: 100%; padding: 10px; background: transparent; color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 7px;
+    font-family: 'DM Mono', monospace; font-size: .65rem; cursor: pointer; transition: all .15s;
+  }
+  .guest-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .nav-links { display: flex; gap: 14px; margin-top: 28px; justify-content: center; font-size: .6rem; }
+  .nav-links a {
+    color: var(--text-dim); text-decoration: none; padding: 7px 16px;
+    border: 1px solid var(--border); border-radius: 6px; transition: all .15s;
+  }
+  .nav-links a:hover { border-color: var(--accent); color: var(--accent); }
+
+  #toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #1a1815; padding: 10px 24px; border-radius: 8px;
+    font-size: .68rem; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 9999;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  #session-bar {
+    display: none; background: rgba(93,186,96,.1); border: 1px solid rgba(93,186,96,.3);
+    border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; text-align: center;
+    font-size: .65rem; color: var(--win); width: 380px; max-width: 94vw;
+  }
+  #session-bar a { color: var(--accent); cursor: pointer; text-decoration: underline; margin: 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="logo">
+  <h1>♟ Chess</h1>
+  <p>PLAY · COMPETE · IMPROVE</p>
+</div>
+
+<div id="session-bar">
+  ✅ Signed in as <strong id="sbar-name"></strong>
+  <a href="chess.html">▶ Play now</a>
+  <a onclick="signOut()" style="color:var(--text-dim)">Sign out</a>
+</div>
+
+<div class="card" id="authCard">
+  <div class="tabs">
+    <button class="tab active" id="tab-login"    onclick="switchTab('login')">Sign In</button>
+    <button class="tab"        id="tab-register" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="form-section active" id="form-login">
+    <p class="subtitle">Sign in with your Gmail address to save ratings and track your progress.</p>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@gmail.com" autocomplete="email">
+      <p class="hint">⚠ Only @gmail.com addresses are accepted</p>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••" autocomplete="current-password">
+    </div>
+    <div class="error-msg" id="login-error"></div>
+    <button class="btn-submit" id="login-btn" onclick="doLogin()">Sign In</button>
+    <p class="switch">No account? <a onclick="switchTab('register')">Register free</a></p>
+    <hr>
+    <button class="guest-btn" onclick="playAsGuest()">Continue as Guest (no rating saved)</button>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="form-section" id="form-register">
+    <p class="subtitle">Create an account to track your Elo rating permanently across sessions.</p>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="reg-username" placeholder="your_name (3–20 chars)" maxlength="20" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="reg-email" placeholder="you@gmail.com" autocomplete="email">
+      <p class="hint">⚠ Only @gmail.com addresses are accepted</p>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="reg-pass" placeholder="min. 6 characters" autocomplete="new-password">
+    </div>
+    <div class="error-msg" id="reg-error"></div>
+    <button class="btn-submit" id="reg-btn" onclick="doRegister()">Create Account</button>
+    <p class="switch">Already have an account? <a onclick="switchTab('login')">Sign in</a></p>
+  </div>
+</div>
+
+<div class="nav-links">
+  <a href="chess.html">▶ Play Chess</a>
+  <a href="leaderboard.html">🏆 Leaderboard</a>
+  <a href="profile.html">👤 My Profile</a>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = 'http://localhost:3001/api';
+
+function isGmail(e) { return /^[^\s@]+@gmail\.com$/i.test(e.trim()); }
+
+function saveAuth(token, user, rating) {
+  localStorage.setItem('chess_token',  token);
+  localStorage.setItem('chess_user',   JSON.stringify(user));
+  localStorage.setItem('chess_rating', JSON.stringify(rating));
+}
+
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function switchTab(tab) {
+  ['login','register'].forEach(t => {
+    document.getElementById('form-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-'  + t).classList.toggle('active', t === tab);
+  });
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('reg-error').textContent   = '';
+}
+
+async function apiPost(endpoint, body) {
+  let r;
+  try {
+    r = await fetch(API + endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+  } catch (networkErr) {
+    throw new Error('⚠️ Cannot reach server. Make sure you ran start.bat and the server is running on port 3001.');
+  }
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+}
+
+// Check server health + existing session
+(function checkSession() {
+  const token = localStorage.getItem('chess_token');
+  const user  = JSON.parse(localStorage.getItem('chess_user') || 'null');
+
+  // Check if server is reachable
+  fetch(API + '/health').then(r => {
+    if (r.ok) {
+      document.getElementById('server-status').textContent = '🟢 Server online';
+      document.getElementById('server-status').style.color = '#81b64c';
+    }
+  }).catch(() => {
+    document.getElementById('server-status').textContent = '🔴 Server offline — double-click start.bat to start';
+    document.getElementById('server-status').style.color = '#e05050';
+  });
+
+  if (!token || !user) return;
+  fetch(API + '/me', { headers: { Authorization: 'Bearer ' + token } })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(d => {
+      document.getElementById('sbar-name').textContent = d.user.username;
+      document.getElementById('session-bar').style.display = 'block';
+      const card = document.getElementById('authCard');
+      card.style.opacity = '.45'; card.style.pointerEvents = 'none';
+    })
+    .catch(() => {
+      ['chess_token','chess_user','chess_rating'].forEach(k => localStorage.removeItem(k));
+    });
+})();
+
+function signOut() {
+  ['chess_token','chess_user','chess_rating'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (!isGmail(email)) { err.textContent = 'Only @gmail.com addresses are allowed.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const data = await apiPost('/auth/login', { username: email, password: pass });
+    saveAuth(data.token, data.user, data.rating);
+    toast('Welcome back, ' + data.user.username + '! ♟');
+    setTimeout(() => { location.href = 'chess.html'; }, 900);
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const pass     = document.getElementById('reg-pass').value;
+  const err      = document.getElementById('reg-error');
+  const btn      = document.getElementById('reg-btn');
+  err.textContent = '';
+  if (!username || !email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (username.length < 3 || username.length > 20) { err.textContent = 'Username must be 3–20 characters.'; return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) { err.textContent = 'Username: letters, numbers, underscores only.'; return; }
+  if (!isGmail(email)) { err.textContent = 'Only @gmail.com addresses are allowed.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  try {
+    const data = await apiPost('/auth/register', { username, email, password: pass });
+    saveAuth(data.token, data.user, data.rating);
+    toast('Welcome, ' + data.user.username + '! ♟');
+    setTimeout(() => { location.href = 'chess.html'; }, 900);
+  } catch(e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Create Account';
+  }
+}
+
+function playAsGuest() {
+  ['chess_token','chess_user','chess_rating'].forEach(k => localStorage.removeItem(k));
+  location.href = 'chess.html';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('form-login').classList.contains('active')) doLogin();
+  else doRegister();
+});
+</script>
+</body>
+</html><script>
+const API = 'http://localhost:3001/api';
+
+function isGmail(e) { return /^[^\s@]+@gmail\.com$/i.test(e.trim()); }
+
+// ── localStorage-based auth (works without server) ────────────
+function getAccounts() { return JSON.parse(localStorage.getItem('chess_accounts') || '{}'); }
+function saveAccounts(a) { localStorage.setItem('chess_accounts', JSON.stringify(a)); }
+
+function saveSession(user) {
+  localStorage.setItem('chess_token', 'local_' + user.username);
+  localStorage.setItem('chess_user',  JSON.stringify(user));
+  localStorage.setItem('chess_rating', JSON.stringify({ rating: user.rating || 800, wins:0, losses:0, draws:0 }));
+}
+
+function toast(msg, dur = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+function switchTab(tab) {
+  ['login','register'].forEach(t => {
+    document.getElementById('form-' + t).classList.toggle('active', t === tab);
+    document.getElementById('tab-'  + t).classList.toggle('active', t === tab);
+  });
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('reg-error').textContent   = '';
+}
+
+// ── Try server silently, fall back to local ───────────────────
+async function tryServerPost(endpoint, body) {
+  try {
+    const r = await fetch(API + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (r.ok) return { ok: true, data: d };
+    return { ok: false, error: d.error };
+  } catch (e) {
+    return { ok: false, error: 'offline' };
+  }
+}
+
+// ── Check session ─────────────────────────────────────────────
+(function checkSession() {
+  const user = JSON.parse(localStorage.getItem('chess_user') || 'null');
+  if (!user) return;
+  document.getElementById('sbar-name').textContent = user.username;
+  document.getElementById('session-bar').style.display = 'block';
+  const card = document.getElementById('authCard');
+  card.style.opacity = '.45'; card.style.pointerEvents = 'none';
+
+  // Try server silently to sync
+  const token = localStorage.getItem('chess_token') || '';
+  fetch(API + '/me', { headers: { Authorization: 'Bearer ' + token } })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(d => {
+      localStorage.setItem('chess_user', JSON.stringify(d.user));
+    }).catch(() => {});
+})();
+
+function signOut() {
+  ['chess_token','chess_user','chess_rating'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+// ── Login ─────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const err   = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  err.textContent = '';
+
+  if (!email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (!isGmail(email)) { err.textContent = 'Only @gmail.com addresses are allowed.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Signing in…';
+
+  // Try server first
+  const srv = await tryServerPost('/auth/login', { username: email, password: pass });
+  if (srv.ok) {
+    localStorage.setItem('chess_token', srv.data.token);
+    saveSession(srv.data.user);
+    toast('Welcome back, ' + srv.data.user.username + '! ♟');
+    setTimeout(() => { location.href = 'chess.html'; }, 900);
+    return;
+  }
+
+  // Server offline or failed → use local accounts
+  const accounts = getAccounts();
+  const account = accounts[email.toLowerCase()];
+  if (!account) {
+    err.textContent = srv.error !== 'offline'
+      ? (srv.error || 'Invalid email or password.')
+      : 'Account not found locally. Register first.';
+    btn.disabled = false; btn.textContent = 'Sign In';
+    return;
+  }
+  if (account.password !== btoa(pass)) {
+    err.textContent = 'Incorrect password.';
+    btn.disabled = false; btn.textContent = 'Sign In';
+    return;
+  }
+  saveSession(account);
+  toast('Welcome back, ' + account.username + '! ♟');
+  setTimeout(() => { location.href = 'chess.html'; }, 900);
+}
+
+// ── Register ──────────────────────────────────────────────────
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const pass     = document.getElementById('reg-pass').value;
+  const err      = document.getElementById('reg-error');
+  const btn      = document.getElementById('reg-btn');
+  err.textContent = '';
+
+  if (!username || !email || !pass) { err.textContent = 'Please fill in all fields.'; return; }
+  if (username.length < 3 || username.length > 20) { err.textContent = 'Username must be 3–20 characters.'; return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(username)) { err.textContent = 'Username: letters, numbers, underscores only.'; return; }
+  if (!isGmail(email)) { err.textContent = 'Only @gmail.com addresses are allowed.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  // Try server first
+  const srv = await tryServerPost('/auth/register', { username, email, password: pass });
+  if (srv.ok) {
+    localStorage.setItem('chess_token', srv.data.token);
+    saveSession(srv.data.user);
+    toast('Welcome, ' + srv.data.user.username + '! ♟');
+    setTimeout(() => { location.href = 'chess.html'; }, 900);
+    return;
+  }
+
+  // Server offline → save locally
+  const accounts = getAccounts();
+  const key = email.toLowerCase();
+  if (accounts[key]) {
+    err.textContent = srv.error !== 'offline'
+      ? (srv.error || 'Email already registered.')
+      : 'Email already registered locally.';
+    btn.disabled = false; btn.textContent = 'Create Account';
+    return;
+  }
+  // Check username uniqueness locally
+  if (Object.values(accounts).some(a => a.username.toLowerCase() === username.toLowerCase())) {
+    err.textContent = 'Username already taken.';
+    btn.disabled = false; btn.textContent = 'Create Account';
+    return;
+  }
+  const newUser = { username, email, rating: 800, password: btoa(pass) };
+  accounts[key] = newUser;
+  saveAccounts(accounts);
+  saveSession(newUser);
+  toast('Welcome, ' + username + '! ♟');
+  setTimeout(() => { location.href = 'chess.html'; }, 900);
+}
+
+function playAsGuest() {
+  ['chess_token','chess_user','chess_rating'].forEach(k => localStorage.removeItem(k));
+  location.href = 'chess.html';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('form-login').classList.contains('active')) doLogin();
+  else doRegister();
+});
+</script>
+</body>
+</html>

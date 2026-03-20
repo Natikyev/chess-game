@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puzzle Training — Grandmaster Chess</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1009;--panel:#191c12;--border:#252a1a;--border2:#353c25;
+  --gold:#c9a84c;--green:#5dba60;--green2:#3a7a42;--blue:#6a8fc9;
+  --text:#eeeedd;--dim:#6a7050;--dim2:#9a9e80;
+  --light-sq:#eeeed2;--dark-sq:#769656;
+  --selected:rgba(20,85,30,.65);--last-move:rgba(155,199,0,.45);
+  --move-hint:rgba(0,0,0,.22);--check:rgba(220,50,50,.7);
+  --accent:var(--green);--accent-dim:#3a7a42;
+}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh}
+
+/* grain */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:.025;background-size:180px 180px}
+
+/* header */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 36px;border-bottom:1px solid var(--border);
+  background:rgba(14,16,9,.85);backdrop-filter:blur(14px);
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.back-btn{
+  display:flex;align-items:center;gap:6px;padding:6px 12px;
+  border:1px solid var(--border2);border-radius:6px;
+  color:var(--dim2);font-size:.6rem;letter-spacing:.06em;
+  text-decoration:none;transition:all .15s;
+}
+.back-btn:hover{border-color:var(--gold);color:var(--gold)}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--green)}
+.topbar-right{display:flex;align-items:center;gap:16px;font-size:.6rem;color:var(--dim2)}
+.streak-badge{
+  display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border:1px solid rgba(232,160,32,.3);border-radius:20px;
+  background:rgba(232,160,32,.07);color:#e8a020;font-weight:500;
+}
+.rating-badge{
+  display:flex;align-items:center;gap:5px;padding:5px 12px;
+  border:1px solid rgba(93,186,96,.3);border-radius:20px;
+  background:rgba(93,186,96,.07);color:var(--green);font-weight:500;
+}
+
+/* Progress bar under header */
+.prog-strip{height:3px;background:rgba(255,255,255,.06)}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .5s ease}
+
+/* Main layout */
+.main{
+  display:flex;gap:0;
+  min-height:calc(100vh - 57px);
+}
+
+/* Sidebar */
+.sidebar{
+  width:300px;flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  background:rgba(0,0,0,.15);
+  overflow-y:auto;
+}
+.sidebar-section{padding:18px 20px;border-bottom:1px solid var(--border)}
+.sidebar-label{font-size:.5rem;letter-spacing:.18em;color:var(--dim2);text-transform:uppercase;margin-bottom:12px}
+
+/* Stats row */
+.pz-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0}
+.pz-stat{background:var(--panel);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;text-align:center}
+.pz-stat-n{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--green);line-height:1}
+.pz-stat-l{font-size:.47rem;letter-spacing:.1em;color:var(--dim2);text-transform:uppercase;margin-top:2px}
+
+/* Filter tabs */
+.filter-tabs{display:flex;gap:5px}
+.filter-tab{
+  flex:1;padding:6px 4px;font-size:.55rem;letter-spacing:.06em;
+  border:1px solid var(--border2);border-radius:6px;cursor:pointer;
+  background:transparent;color:var(--dim2);font-family:'DM Mono',monospace;
+  transition:all .15s;text-align:center;
+}
+.filter-tab:hover{color:var(--text);border-color:var(--dim2)}
+.filter-tab.active{background:rgba(93,186,96,.12);border-color:var(--green);color:var(--green)}
+
+/* Puzzle list */
+.pz-list{flex:1;overflow-y:auto;padding:8px 12px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.pz-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  border-radius:7px;cursor:pointer;border:1px solid transparent;
+  transition:all .12s;margin-bottom:3px;
+}
+.pz-item:hover{background:rgba(255,255,255,.04);border-color:var(--border2)}
+.pz-item.active{background:rgba(93,186,96,.1);border-color:rgba(93,186,96,.35)}
+.pz-item-num{font-size:.5rem;color:var(--dim2);width:22px;flex-shrink:0;text-align:right}
+.pz-item-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  border:1.5px solid var(--border2);background:transparent;
+}
+.pz-item-dot.solved{background:var(--green);border-color:var(--green)}
+.pz-item-dot.active{border-color:var(--gold);box-shadow:0 0 5px rgba(201,168,76,.5)}
+.pz-item-info{flex:1;min-width:0}
+.pz-item-title{font-size:.58rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pz-item-meta{font-size:.5rem;color:var(--dim2);margin-top:1px}
+.pz-item-stars{font-size:.6rem;color:var(--dim2);flex-shrink:0}
+.pz-item-stars .lit{color:var(--gold)}
+
+/* Center - board area */
+.center{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:28px 24px;
+  position:relative;
+}
+
+/* Puzzle header above board */
+.puzzle-header{
+  width:100%;max-width:520px;margin-bottom:18px;
+  animation:fadeIn .35s ease both;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.puzzle-header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.puzzle-title-main{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--text);line-height:1.1}
+.puzzle-timer{font-size:.65rem;color:var(--gold);font-weight:500;padding:4px 10px;border:1px solid rgba(201,168,76,.3);border-radius:5px;background:rgba(201,168,76,.06);min-width:60px;text-align:center}
+.puzzle-badges{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.pz-badge{font-size:.5rem;letter-spacing:.1em;padding:3px 8px;border-radius:4px;text-transform:uppercase}
+.pz-badge.diff-easy{background:rgba(93,186,96,.14);color:var(--green);border:1px solid rgba(93,186,96,.3)}
+.pz-badge.diff-medium{background:rgba(212,168,67,.14);color:var(--gold);border:1px solid rgba(212,168,67,.3)}
+.pz-badge.diff-hard{background:rgba(224,80,80,.14);color:#e05050;border:1px solid rgba(224,80,80,.3)}
+.pz-badge.theme{background:rgba(255,255,255,.06);color:var(--dim2);border:1px solid var(--border2)}
+.pz-badge.rating{background:rgba(201,168,76,.08);color:var(--gold);border:1px solid rgba(201,168,76,.25)}
+.puzzle-desc-main{font-size:.63rem;color:var(--dim2);line-height:1.6;margin-bottom:6px}
+.puzzle-turn-main{font-size:.7rem;font-weight:500;color:var(--text)}
+
+/* Board wrapper */
+.board-wrap{position:relative;animation:fadeIn .35s .05s ease both}
+.board-labels-top{
+  display:flex;width:480px;margin-left:20px;
+  justify-content:space-around;padding-bottom:3px;
+  font-size:.6rem;color:var(--dim2);
+}
+.board-row-wrap{display:flex;align-items:center}
+.rank-labels{display:flex;flex-direction:column;width:20px;height:480px;justify-content:space-around;align-items:center;font-size:.6rem;color:var(--dim2)}
+.file-labels{display:flex;width:480px;margin-left:20px;justify-content:space-around;padding-top:4px;font-size:.6rem;color:var(--dim2)}
+#board{width:480px;height:480px;display:grid;grid-template-columns:repeat(8,60px);grid-template-rows:repeat(8,60px);border:2px solid var(--border2);box-shadow:0 0 60px rgba(0,0,0,.9)}
+
+/* Board squares */
+.sq{width:60px;height:60px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .1s}
+.sq.light{background:var(--light-sq)}.sq.dark{background:var(--dark-sq)}
+.sq.selected{background:var(--selected)!important}
+.sq.last-move{background:var(--last-move)!important}
+.sq.in-check{background:var(--check)!important}
+.sq img{width:54px;height:54px;display:block;pointer-events:none;position:relative;z-index:2}
+.sq:hover img{transform:scale(1.05)}.sq.selected img{transform:scale(1.08)}
+.hint-dot{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--move-hint);z-index:3;pointer-events:none;animation:dotPop .15s ease}
+.hint-ring{position:absolute;width:56px;height:56px;border-radius:50%;border:5px solid var(--move-hint);background:transparent;z-index:3;pointer-events:none;animation:dotPop .15s ease}
+@keyframes dotPop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* Status bar below board */
+.puzzle-status-bar{
+  width:100%;max-width:520px;margin-top:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  animation:fadeIn .35s .08s ease both;
+}
+.puzzle-status-msg{
+  flex:1;font-size:.68rem;padding:9px 14px;border-radius:8px;
+  border:1px solid var(--border2);background:rgba(255,255,255,.03);
+  color:var(--dim2);transition:all .25s;min-height:38px;display:flex;align-items:center;
+}
+.puzzle-status-msg.correct{background:rgba(93,186,96,.1);border-color:rgba(93,186,96,.4);color:var(--green)}
+.puzzle-status-msg.wrong{background:rgba(224,80,80,.1);border-color:rgba(224,80,80,.3);color:#e05050}
+.puzzle-status-msg.hint{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold)}
+.pz-nav-btns{display:flex;gap:6px}
+.pz-nav-btn{
+  width:36px;height:36px;border:1px solid var(--border2);border-radius:7px;
+  background:rgba(255,255,255,.04);color:var(--dim2);cursor:pointer;
+  font-size:.9rem;transition:all .15s;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;
+}
+.pz-nav-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08)}
+
+/* Stars row */
+.puzzle-stars-row{
+  width:100%;max-width:520px;margin-top:10px;
+  display:flex;align-items:center;justify-content:space-between;
+  animation:fadeIn .35s .1s ease both;
+}
+.pz-stars{font-size:1.2rem}
+.pstar{color:var(--dim2)}.pstar.lit{color:var(--gold);text-shadow:0 0 6px rgba(201,168,76,.5)}
+.attempts-text{font-size:.55rem;color:var(--dim2)}
+
+/* Solved overlay */
+.solved-overlay{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(8,10,5,.88);backdrop-filter:blur(12px);
+  align-items:center;justify-content:center;
+}
+.solved-overlay.show{display:flex;animation:fadeIn .3s ease both}
+.solved-box{
+  background:var(--panel);border:1px solid rgba(93,186,96,.4);
+  border-radius:20px;padding:40px 50px;text-align:center;
+  box-shadow:0 0 80px rgba(0,0,0,.9),0 0 30px rgba(93,186,96,.1);
+  max-width:380px;width:90%;
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.solved-icon{font-size:3rem;margin-bottom:10px;animation:bounce .6s ease .1s both}
+@keyframes bounce{0%{transform:scale(0) rotate(-20deg)}70%{transform:scale(1.15) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.solved-title{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:700;color:var(--green);margin-bottom:4px}
+.solved-subtitle{font-size:.65rem;color:var(--dim2);letter-spacing:.08em;margin-bottom:10px}
+.solved-stars{font-size:2rem;margin-bottom:8px}
+.solved-time{font-size:.65rem;color:var(--dim2);margin-bottom:4px}
+.solved-streak{font-size:.8rem;color:#e8a020;font-weight:700;margin-bottom:20px;min-height:24px}
+.solved-btns{display:flex;gap:10px;justify-content:center}
+.solved-btn{
+  padding:10px 22px;border:1px solid var(--border2);border-radius:8px;
+  font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;
+  background:transparent;color:var(--dim2);transition:all .15s;
+}
+.solved-btn:hover{border-color:var(--dim2);color:var(--text)}
+.solved-btn.primary{background:var(--green);color:#0e1009;border-color:var(--green);font-weight:500}
+.solved-btn.primary:hover{background:#6dcf70}
+
+/* Promo modal */
+.overlay-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;align-items:center;justify-content:center}
+.overlay-bg.show{display:flex}
+.obox{background:var(--panel);border:1px solid rgba(93,186,96,.35);border-radius:14px;padding:34px 42px;text-align:center;box-shadow:0 0 80px rgba(0,0,0,.9);min-width:270px}
+.obox h2{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:var(--green);margin-bottom:8px}
+.obox p{color:var(--dim2);font-size:.7rem;margin-bottom:18px}
+.promo-choices{display:flex;gap:12px;justify-content:center}
+.promo-btn{width:64px;height:64px;border-radius:10px;background:var(--panel);border:2px solid var(--border2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.promo-btn:hover{border-color:var(--green);background:rgba(93,186,96,.12);transform:scale(1.08)}
+.promo-btn img{width:48px;height:48px;pointer-events:none}
+
+#check-flash{position:fixed;inset:0;pointer-events:none;z-index:50;background:rgba(220,50,50,0);transition:background .08s ease}
+#check-flash.flash{animation:checkFlash .5s ease forwards}
+@keyframes checkFlash{0%{background:rgba(220,50,50,0)}20%{background:rgba(220,50,50,.28)}100%{background:rgba(220,50,50,0)}}
+
+/* Responsive */
+@media(max-width:900px){.sidebar{width:240px}}
+@media(max-width:720px){
+  .main{flex-direction:column}
+  .sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .pz-list{max-height:180px}
+  #board{width:360px;height:360px;grid-template-columns:repeat(8,45px);grid-template-rows:repeat(8,45px)}
+  .sq{width:45px;height:45px}.sq img{width:40px;height:40px}
+  .rank-labels{height:360px}.board-labels-top,.file-labels{width:360px}
+  .puzzle-header,.puzzle-status-bar,.puzzle-stars-row{max-width:380px}
+}
+</style>
+</head>
+<body>
+<div id="check-flash"></div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="back-btn" href="home.html">← Back</a>
+    <div class="page-title">🧩 Puzzle Training</div>
+  </div>
+  <div class="topbar-right">
+    <div class="streak-badge" id="streakBadge" style="display:none">🔥 <span id="topStreak">0</span> streak</div>
+    <div class="rating-badge">Solved: <span id="topSolved">0</span>/8</div>
+  </div>
+</div>
+<div class="prog-strip"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+
+<div class="main">
+  <!-- Sidebar: puzzle list -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Your Progress</div>
+      <div class="pz-stats">
+        <div class="pz-stat"><div class="pz-stat-n" id="statSolved">0</div><div class="pz-stat-l">Solved</div></div>
+        <div class="pz-stat"><div class="pz-stat-n" id="statStreak" style="color:var(--gold)">0</div><div class="pz-stat-l">Streak</div></div>
+        <div class="pz-stat"><div class="pz-stat-n" id="statStars" style="color:var(--gold)">0</div><div class="pz-stat-l">Stars</div></div>
+        <div class="pz-stat"><div class="pz-stat-n" id="statPct">0%</div><div class="pz-stat-l">Complete</div></div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Filter</div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setPuzzleFilter('all')" id="fAll">All</button>
+        <button class="filter-tab" onclick="setPuzzleFilter('easy')" id="fEasy" style="color:#5dba60">Easy</button>
+        <button class="filter-tab" onclick="setPuzzleFilter('unsolved')" id="fUnsolved">Unsolved</button>
+      </div>
+    </div>
+    <div class="pz-list" id="pzList"></div>
+  </div>
+
+  <!-- Center: board -->
+  <div class="center">
+    <div class="puzzle-header" id="puzzleHeader">
+      <div class="puzzle-header-top">
+        <div class="puzzle-title-main" id="puzzleTitle">Select a puzzle</div>
+        <div class="puzzle-timer" id="puzzleTimer">0s</div>
+      </div>
+      <div class="puzzle-badges" id="puzzleBadges"></div>
+      <div class="puzzle-desc-main" id="puzzleDesc">Choose a puzzle from the list to begin.</div>
+      <div class="puzzle-turn-main" id="puzzleTurn"></div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board-row-wrap">
+        <div class="rank-labels" id="rankLabels"></div>
+        <div id="board"></div>
+      </div>
+      <div class="file-labels" id="fileLabels"></div>
+    </div>
+
+    <div class="puzzle-stars-row">
+      <div class="pz-stars" id="puzzleStars">⭐⭐⭐</div>
+      <div class="attempts-text" id="puzzleAttempts"></div>
+    </div>
+
+    <div class="puzzle-status-bar">
+      <div class="puzzle-status-msg" id="puzzleStatus">Find the best move!</div>
+      <div class="pz-nav-btns">
+        <button class="pz-nav-btn" onclick="prevPuzzle()" title="Previous puzzle">◀</button>
+        <button class="pz-nav-btn" onclick="retryPuzzle()" title="Retry">↺</button>
+        <button class="pz-nav-btn" onclick="showPuzzleSolution()" title="Show hint">💡</button>
+        <button class="pz-nav-btn" onclick="nextPuzzle()" title="Next puzzle">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Solved overlay -->
+<div class="solved-overlay" id="solvedOverlay">
+  <div class="solved-box">
+    <div class="solved-icon">🎉</div>
+    <div class="solved-title">Problem Solved!</div>
+    <div class="solved-subtitle">Move to the next problem</div>
+    <div class="solved-stars" id="soStars"></div>
+    <div class="solved-time" id="soTime"></div>
+    <div class="solved-streak" id="soStreak"></div>
+    <div class="solved-btns">
+      <button class="solved-btn" onclick="closeSolvedRetry()">↺ Retry</button>
+      <button class="solved-btn primary" onclick="closeSolvedNext()">Next Puzzle ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Promo modal -->
+<div class="overlay-bg" id="promo-modal">
+  <div class="obox">
+    <div style="font-size:2rem;margin-bottom:6px">♛</div>
+    <h2>Promote Pawn</h2>
+    <p>Choose a piece to promote to</p>
+    <div class="promo-choices" id="promoChoices"></div>
+  </div>
+</div>
+
+<script>
+// ─── Shim the HTML elements chess.js expects ───────────────────
+// chess.js targets IDs that exist in chess.html's layout.
+// We provide lightweight shims so it doesn't crash.
+document.write = function(){}; // safety no-op
+
+// Create hidden shim elements that chess.js might reference
+const shimIds = ['ratingBar','ratingDisplay','ratingChange','aiRatingDisplay','aiRatingLabel',
+  'statWins','statLosses','statDraws','btnModeAI','btnMode2P','btnModePuzzle',
+  'ai-controls','levelSlider','levelNum','aiRatingHint','btnWhite','btnBlack',
+  'clockSelect','thinking','move-log','btnSound','btnHints','btnFlip',
+  'opening-panel','opening-list','clockTimeTop','clockTimeBottom','clockBoxTop','clockBoxBottom',
+  'playerNameTop','playerNameBottom','avatarTop','avatarBottom','capTop','capBottom',
+  'matTop','matBottom','turnBanner','overlay','overlay2p','o2Icon','o2Title','o2Msg',
+  'oIcon','oTitle','oMsg','oRating','pgn-modal','pgn-area','copyBtn',
+  'analysis-modal','analysisSummary','analysisList','analysisSubtitle',
+  'draw-offer-modal','drawOfferMsg','resign-modal','btnDrawOffer','btnClaimDraw',
+  'playerRowTop','playerRowBottom'];
+
+shimIds.forEach(id => {
+  if (!document.getElementById(id)) {
+    const el = document.createElement('div');
+    el.id = id;
+    el.style.display = 'none';
+    document.body.appendChild(el);
+  }
+});
+// Shim select element for clockSelect
+const cs = document.getElementById('clockSelect');
+if (cs) { cs.value = '0'; cs.addEventListener = function(){}; }
+
+// Shim levelSlider
+const ls = document.getElementById('levelSlider');
+if (ls) { ls.value = '5'; }
+</script>
+<script src="auth.js"></script>
+<script src="chess.js"></script>
+<script>
+// ─── Puzzle Page Init ───────────────────────────────────────────
+
+let puzzleFilter2 = 'all';
+
+function renderSidebar() {
+  const list = document.getElementById('pzList');
+  if (!list) return;
+  const filtered = puzzleFilter2 === 'unsolved'
+    ? PUZZLES.filter(p => !puzzleProgress[p.id]?.solved)
+    : puzzleFilter2 === 'easy'
+    ? PUZZLES.filter(p => p.diff === 'easy')
+    : PUZZLES;
+
+  list.innerHTML = '';
+  filtered.forEach((p, i) => {
+    const prog = puzzleProgress[p.id] || {solved:false,stars:0};
+    const isActive = PUZZLES[currentPuzzleIdx]?.id === p.id;
+    const stars = prog.stars > 0
+      ? [1,2,3].map(n=>`<span class="${n<=prog.stars?'lit':''}"">★</span>`).join('')
+      : '···';
+    const item = document.createElement('div');
+    item.className = 'pz-item' + (isActive?' active':'');
+    item.dataset.idx = PUZZLES.indexOf(p);
+    item.innerHTML = `
+      <span class="pz-item-num">${i+1}</span>
+      <span class="pz-item-dot${prog.solved?' solved':''}${isActive?' active':''}"></span>
+      <span class="pz-item-info">
+        <div class="pz-item-title">${p.title}</div>
+        <div class="pz-item-meta">${p.theme} · Rating ${p.rating}</div>
+      </span>
+      <span class="pz-item-stars">${stars}</span>
+    `;
+    item.onclick = () => {
+      currentPuzzleIdx = parseInt(item.dataset.idx);
+      loadPuzzle(currentPuzzleIdx);
+    };
+    list.appendChild(item);
+  });
+}
+
+function setPuzzleFilter(f) {
+  puzzleFilter2 = f;
+  ['all','easy','unsolved'].forEach(x => {
+    const el = document.getElementById('f'+x[0].toUpperCase()+x.slice(1));
+    if (el) el.classList.toggle('active', x===f);
+  });
+  // also call original if it exists
+  if (typeof window._setPuzzleFilter === 'function') window._setPuzzleFilter(f);
+  renderSidebar();
+}
+
+function updateTopStats() {
+  const solved = PUZZLES.filter(p => puzzleProgress[p.id]?.solved).length;
+  const totalStars = PUZZLES.reduce((s,p) => s+(puzzleProgress[p.id]?.stars||0), 0);
+  const pct = Math.round(solved/PUZZLES.length*100);
+
+  document.getElementById('statSolved').textContent = solved;
+  document.getElementById('statStreak').textContent = puzzleStreak || 0;
+  document.getElementById('statStars').textContent = totalStars;
+  document.getElementById('statPct').textContent = pct+'%';
+  document.getElementById('topSolved').textContent = solved;
+  document.getElementById('progFill').style.width = pct+'%';
+
+  if (puzzleStreak > 1) {
+    document.getElementById('topStreak').textContent = puzzleStreak;
+    document.getElementById('streakBadge').style.display = 'flex';
+  }
+  renderSidebar();
+}
+
+// Override puzzleStatus updates to use our new element
+const _origSetPuzzleStatus = window.setPuzzleStatus || function(){};
+window.setPuzzleStatus = function(msg, cls) {
+  const el = document.getElementById('puzzleStatus');
+  if (el) {
+    el.innerHTML = msg;
+    el.className = 'puzzle-status-msg' + (cls ? ' '+cls : '');
+  }
+};
+
+// Override puzzle timer element
+const _origUpdatePuzzleTimer = window.updatePuzzleTimer || function(){};
+window.updatePuzzleTimer = function() {
+  const el = document.getElementById('puzzleTimer');
+  if (el && puzzleStartTime) {
+    el.textContent = Math.floor((Date.now()-puzzleStartTime)/1000) + 's';
+  }
+};
+
+// Override progress update to also refresh our UI
+const _origUpdatePuzzleProgress = window.updatePuzzleProgress || function(){};
+window.updatePuzzleProgress = function() {
+  _origUpdatePuzzleProgress();
+  updateTopStats();
+};
+
+// Override stars display
+const _origRenderStars = window.renderStars;
+
+// Override solved overlay
+window.showPuzzleSolvedOverlay = function(stars, time, streak) {
+  document.getElementById('soStars').innerHTML = [1,2,3].map(n=>`<span style="color:${n<=stars?'var(--gold)':'var(--dim2)'}"">★</span>`).join('');
+  document.getElementById('soTime').textContent = 'Solved in ' + Math.round(time/1000) + 's';
+  document.getElementById('soStreak').textContent = streak > 1 ? '🔥 ' + streak + ' puzzle streak!' : '';
+  document.getElementById('solvedOverlay').classList.add('show');
+  updateTopStats();
+};
+
+function closeSolvedRetry() {
+  document.getElementById('solvedOverlay').classList.remove('show');
+  retryPuzzle();
+}
+function closeSolvedNext() {
+  document.getElementById('solvedOverlay').classList.remove('show');
+  nextPuzzle();
+}
+
+// Intercept the old puzzleSolvedOverlay show
+const _origPSO = document.getElementById('puzzleSolvedOverlay');
+if (_origPSO) {
+  const observer = new MutationObserver(() => {
+    if (_origPSO.classList.contains('show')) {
+      _origPSO.classList.remove('show');
+      const stars = (document.getElementById('psoStars')?.textContent.match(/★/g)||[]).length;
+      const time = puzzleStartTime ? Date.now() - puzzleStartTime : 0;
+      showPuzzleSolvedOverlay(stars, time, puzzleStreak);
+    }
+  });
+  observer.observe(_origPSO, {attributes:true, attributeFilter:['class']});
+}
+
+// Kick off in puzzle mode
+window.addEventListener('DOMContentLoaded', () => {
+  // Force puzzle mode
+  if (typeof setGameMode === 'function') setGameMode('puzzle');
+  setTimeout(() => {
+    updateTopStats();
+    renderSidebar();
+    // Scroll active item into view
+    const active = document.querySelector('.pz-item.active');
+    if (active) active.scrollIntoView({block:'center',behavior:'smooth'});
+  }, 300);
+});
+</script>
+</body>
+</html>

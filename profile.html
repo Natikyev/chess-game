@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess — My Profile</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#1a1a1a;--panel:#242424;--border:#3d3d3d;--accent:#81b64c;--accent-dim:#4e7a2a;--text:#e8e8e8;--text-dim:#8a8a8a;--win:#81b64c;--lose:#e05050;--draw:#d4a843}
+  body{background:var(--bg);background-image:radial-gradient(ellipse at 20% 20%,rgba(80,60,40,.25) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(60,40,25,.3) 0%,transparent 60%);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 20px}
+  nav{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:640px;margin-bottom:30px}
+  .nav-logo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--accent);text-decoration:none}
+  .nav-links{display:flex;gap:10px}
+  .nav-links a{color:var(--text-dim);text-decoration:none;font-size:.6rem;padding:6px 13px;border:1px solid var(--border);border-radius:5px;transition:all .15s}
+  .nav-links a:hover,.nav-links a.active{border-color:var(--accent);color:var(--accent)}
+  .not-logged-in{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:48px 36px;text-align:center;max-width:400px;width:100%}
+  .not-logged-in h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--accent);margin-bottom:10px}
+  .not-logged-in p{font-size:.65rem;color:var(--text-dim);margin-bottom:24px;line-height:1.7}
+  .btn{padding:11px 24px;border-radius:7px;font-family:'DM Mono',monospace;font-size:.68rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block}
+  .btn-primary{background:var(--accent);color:#1a1815;border:none}
+  .btn-primary:hover{background:#e0b84f}
+  .btn-outline{background:transparent;color:var(--text-dim);border:1px solid var(--border);margin-left:10px}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-danger{background:transparent;color:#e07070;border:1px solid rgba(220,80,80,.4);font-size:.62rem;padding:8px 16px}
+  .btn-danger:hover{background:rgba(220,80,80,.1)}
+  .profile-wrap{width:100%;max-width:640px;display:flex;flex-direction:column;gap:18px}
+  .profile-hero{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:28px 30px;display:flex;gap:22px;align-items:center}
+  .hero-avatar{width:72px;height:72px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:2rem;border:3px solid var(--accent);flex-shrink:0}
+  .hero-info{flex:1;min-width:0}
+  .hero-username{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--text);margin-bottom:4px}
+  .hero-email{font-size:.6rem;color:var(--text-dim);margin-bottom:6px}
+  .hero-joined{font-size:.58rem;color:var(--text-dim)}
+  .hero-rating{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--accent);text-align:right;flex-shrink:0}
+  .hero-rating-label{font-size:.55rem;color:var(--text-dim);text-align:right;letter-spacing:.1em}
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .stat-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+  .stat-val{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:4px}
+  .stat-label{font-size:.55rem;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase}
+  .stat-card.wins .stat-val{color:var(--win)}
+  .stat-card.losses .stat-val{color:var(--lose)}
+  .stat-card.draws .stat-val{color:var(--draw)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px 24px}
+  .card-title{font-size:.6rem;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;margin-bottom:16px}
+  .hist-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(74,68,63,.4);font-size:.63rem}
+  .hist-row:last-child{border-bottom:none}
+  .hist-result{width:40px;font-weight:700;text-align:center;font-size:.65rem}
+  .hist-result.win{color:var(--win)}.hist-result.loss{color:var(--lose)}.hist-result.draw{color:var(--draw)}
+  .hist-vs{color:var(--text-dim);flex:1}
+  .hist-change{min-width:44px;text-align:right;font-weight:600}
+  .hist-change.pos{color:var(--win)}.hist-change.neg{color:var(--lose)}.hist-change.neu{color:var(--draw)}
+  .hist-rating{color:var(--text-dim);font-size:.58rem;min-width:80px;text-align:center}
+  .hist-date{color:var(--text-dim);font-size:.56rem;margin-left:auto}
+  .winrate-bar{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:8px;display:flex}
+  .wr-win{background:var(--win);transition:width .6s ease}
+  .wr-loss{background:var(--lose);transition:width .6s ease}
+  .wr-draw{background:var(--draw);transition:width .6s ease}
+  .wr-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--text-dim);margin-top:5px}
+  .loading{color:var(--text-dim);font-size:.65rem;padding:20px 0;text-align:center}
+  #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--accent);color:#1a1815;padding:10px 24px;border-radius:8px;font-size:.68rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="index.html">♟ Chess</a>
+  <div class="nav-links">
+    <a href="chess.html">▶ Play</a>
+    <a href="leaderboard.html">🏆 Board</a>
+    <a href="profile.html" class="active">👤 Profile</a>
+    <a href="index.html" id="nav-auth">Sign In</a>
+  </div>
+</nav>
+
+<div id="not-logged-in" style="display:none" class="not-logged-in">
+  <h2>👤 My Profile</h2>
+  <p>Sign in with your Gmail account to view your rating, stats, and full game history.</p>
+  <a href="index.html" class="btn btn-primary">Sign In</a>
+  <a href="index.html#register" class="btn btn-outline">Register</a>
+</div>
+
+<div id="profile-content" class="profile-wrap" style="display:none">
+  <div class="profile-hero">
+    <div class="hero-avatar" id="h-avatar">♟</div>
+    <div class="hero-info">
+      <div class="hero-username" id="h-username">—</div>
+      <div class="hero-email"    id="h-email">—</div>
+      <div class="hero-joined"   id="h-joined">—</div>
+    </div>
+    <div>
+      <div class="hero-rating"       id="h-rating">—</div>
+      <div class="hero-rating-label">ELO RATING</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card wins">  <div class="stat-val" id="s-wins">—</div>  <div class="stat-label">Wins</div></div>
+    <div class="stat-card losses"><div class="stat-val" id="s-losses">—</div><div class="stat-label">Losses</div></div>
+    <div class="stat-card draws"> <div class="stat-val" id="s-draws">—</div> <div class="stat-label">Draws</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Win Rate</div>
+    <div class="winrate-bar">
+      <div class="wr-win"  id="wr-win"  style="width:0%"></div>
+      <div class="wr-loss" id="wr-loss" style="width:0%"></div>
+      <div class="wr-draw" id="wr-draw" style="width:0%"></div>
+    </div>
+    <div class="wr-labels">
+      <span id="wr-win-pct" style="color:var(--win)">0% Wins</span>
+      <span id="wr-games">0 games</span>
+      <span id="wr-loss-pct" style="color:var(--lose)">0% Losses</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Recent Games</div>
+    <div id="hist-list"><div class="loading">Loading…</div></div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end">
+    <button class="btn btn-danger" onclick="doSignOut()">Sign Out</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API='http://localhost:3001/api';
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),3000)}
+
+async function load(){
+  const token=localStorage.getItem('chess_token');
+  const navAuth=document.getElementById('nav-auth');
+  if(!token){
+    document.getElementById('not-logged-in').style.display='block';
+    return;
+  }
+  try{
+    const [meRes,histRes]=await Promise.all([
+      fetch(API+'/me',{headers:{Authorization:'Bearer '+token}}),
+      fetch(API+'/me/history',{headers:{Authorization:'Bearer '+token}})
+    ]);
+    if(!meRes.ok) throw new Error('unauthorized');
+    const me=await meRes.json();
+    const hist=await histRes.json();
+    const {user,rating}=me;
+    // Update nav
+    navAuth.textContent='👤 '+user.username; navAuth.href='profile.html';
+    // Show profile
+    document.getElementById('profile-content').style.display='flex';
+    document.getElementById('h-avatar').textContent=user.username.charAt(0).toUpperCase();
+    document.getElementById('h-username').textContent=user.username;
+    document.getElementById('h-email').textContent=user.email;
+    const joined=new Date(user.created_at).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('h-joined').textContent='Joined '+joined;
+    document.getElementById('h-rating').textContent=rating?rating.rating:'800';
+    const w=rating?rating.wins:0, l=rating?rating.losses:0, d=rating?rating.draws:0;
+    document.getElementById('s-wins').textContent=w;
+    document.getElementById('s-losses').textContent=l;
+    document.getElementById('s-draws').textContent=d;
+    const total=w+l+d||1;
+    document.getElementById('wr-win').style.width=(w/total*100)+'%';
+    document.getElementById('wr-loss').style.width=(l/total*100)+'%';
+    document.getElementById('wr-draw').style.width=(d/total*100)+'%';
+    document.getElementById('wr-win-pct').textContent=Math.round(w/total*100)+'% Wins';
+    document.getElementById('wr-loss-pct').textContent=Math.round(l/total*100)+'% Losses';
+    document.getElementById('wr-games').textContent=(w+l+d)+' games';
+    // History
+    const hlist=document.getElementById('hist-list');
+    if(!hist.history.length){hlist.innerHTML='<div class="loading">No games yet — play some!</div>';return}
+    hlist.innerHTML=hist.history.map(g=>{
+      const ch=g.rating_change;
+      const cc=ch>0?'pos':ch<0?'neg':'neu';
+      const cs=(ch>=0?'+':'')+ch;
+      const date=new Date(g.played_at).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+      return `<div class="hist-row">
+        <span class="hist-result ${g.result}">${g.result.toUpperCase()}</span>
+        <span class="hist-vs">vs AI Lvl ${g.ai_level||'?'}</span>
+        <span class="hist-rating">${g.rating_before} → ${g.rating_after}</span>
+        <span class="hist-change ${cc}">${cs}</span>
+        <span class="hist-date">${date}</span>
+      </div>`;
+    }).join('');
+  }catch{
+    ['chess_token','chess_user','chess_rating'].forEach(k=>localStorage.removeItem(k));
+    document.getElementById('not-logged-in').style.display='block';
+  }
+}
+
+function doSignOut(){
+  ['chess_token','chess_user','chess_rating'].forEach(k=>localStorage.removeItem(k));
+  toast('Signed out successfully');
+  setTimeout(()=>{location.href='index.html'},800);
+}
+
+load();
+</script>
+</body>
+</html>
