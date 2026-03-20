@@ -3,7 +3,7 @@
 //  Include BEFORE chess.js in chess.html
 // ============================================================
 
-const API_BASE = 'https://chess-game-xxxx.onrender.com/api';
+const API_BASE = 'https://chess-game-1p5j.onrender.com/api';
 
 // ── Gmail-only enforcement ────────────────────────────────────
 function isGmailAddress(email) {
