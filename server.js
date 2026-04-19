@@ -387,6 +387,13 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('opponent_move', { from, to, promotion });
   });
 
+  // Chat message
+  socket.on('chat_message', ({ roomId, text }) => {
+    if (!text || !currentUsername) return;
+    const clean = text.slice(0, 200);
+    socket.to(roomId).emit('chat_message', { from: currentUsername, text: clean });
+  });
+
   // Resign
   socket.on('resign', ({ roomId }) => {
     const room = gameRooms.get(roomId);

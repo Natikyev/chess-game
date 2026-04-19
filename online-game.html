@@ -80,6 +80,28 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 .g-btn:hover{border-color:var(--gold);color:var(--gold)}
 .g-btn.danger:hover{border-color:var(--red);color:#e08080}
 
+/* ── CHAT ── */
+.chat-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.chat-title{font-size:.5rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;padding:12px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.chat-unread{background:var(--gold);color:#0e0d0a;font-size:.45rem;padding:1px 6px;border-radius:10px;font-weight:700;display:none}
+.chat-unread.show{display:inline-block}
+.chat-messages{height:160px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.chat-msg{display:flex;flex-direction:column;gap:2px;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.mine{align-items:flex-end}
+.chat-msg.theirs{align-items:flex-start}
+.msg-bubble{padding:6px 10px;border-radius:8px;font-size:.6rem;line-height:1.5;max-width:85%;word-break:break-word}
+.chat-msg.mine .msg-bubble{background:rgba(201,168,76,.18);color:var(--text);border-bottom-right-radius:2px}
+.chat-msg.theirs .msg-bubble{background:var(--panel2);color:var(--text);border-bottom-left-radius:2px;border:1px solid var(--border)}
+.msg-name{font-size:.5rem;color:var(--dim2);padding:0 4px}
+.chat-input-wrap{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--border)}
+.chat-input{flex:1;background:#0a0908;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.6rem;outline:none;transition:border-color .15s}
+.chat-input:focus{border-color:var(--gold)}
+.chat-input::placeholder{color:var(--dim)}
+.chat-send{padding:7px 12px;background:var(--gold);color:#0e0d0a;border:none;border-radius:6px;font-family:'DM Mono',monospace;font-size:.6rem;font-weight:600;cursor:pointer;transition:background .15s;flex-shrink:0}
+.chat-send:hover{background:var(--gold2)}
+.chat-empty{text-align:center;color:var(--dim);font-size:.58rem;padding:20px 0}
+
 /* ── OVERLAYS ── */
 .overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}
 .overlay.show{display:flex}
@@ -149,6 +171,21 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
     <div class="game-btns">
       <button class="g-btn" onclick="offerDraw()">½ Offer Draw</button>
       <button class="g-btn danger" onclick="confirmResign()">🏳 Resign</button>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-card">
+      <div class="chat-title">
+        💬 Chat
+        <span class="chat-unread" id="chatUnread">0</span>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty" id="chatEmpty">No messages yet</div>
+      </div>
+      <div class="chat-input-wrap">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Type a message..." maxlength="200" autocomplete="off">
+        <button class="chat-send" onclick="sendChatMessage()">Send</button>
+      </div>
     </div>
   </div>
 </div>
@@ -250,6 +287,18 @@ socket.on('draw_offered', () => {
 
 socket.on('draw_declined', () => {
   toast('Draw offer declined.');
+});
+
+socket.on('chat_message', data => {
+  addChatMessage(data.from, data.text, false);
+  // Show unread badge if chat is scrolled up
+  const msgs = document.getElementById('chatMessages');
+  const isAtBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 40;
+  if (!isAtBottom) {
+    const badge = document.getElementById('chatUnread');
+    badge.classList.add('show');
+    badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+  }
 });
 
 socket.on('opponent_disconnected', () => {
@@ -596,6 +645,58 @@ function showResult(reason, winner) {
 
   document.getElementById('resultOverlay').classList.add('show');
 }
+
+// ── Chat ──────────────────────────────────────────────────────
+function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  socket.emit('chat_message', { roomId, text });
+  addChatMessage(user?.username || 'You', text, true);
+}
+
+function addChatMessage(from, text, isMine) {
+  const container = document.getElementById('chatMessages');
+  const empty = document.getElementById('chatEmpty');
+  if (empty) empty.remove();
+
+  const msg = document.createElement('div');
+  msg.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
+  msg.innerHTML = `
+    <div class="msg-name">${from}</div>
+    <div class="msg-bubble">${escapeHtml(text)}</div>
+  `;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+
+  // Clear unread badge if mine
+  if (isMine) {
+    const badge = document.getElementById('chatUnread');
+    badge.classList.remove('show');
+    badge.textContent = '0';
+  }
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Enter key to send
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage();
+});
+
+// Clear unread on scroll to bottom
+document.getElementById('chatMessages').addEventListener('scroll', function() {
+  const isAtBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 40;
+  if (isAtBottom) {
+    const badge = document.getElementById('chatUnread');
+    badge.classList.remove('show');
+    badge.textContent = '0';
+  }
+});
 
 // ── Toast ─────────────────────────────────────────────────────
 function toast(msg) {
