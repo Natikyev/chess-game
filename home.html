@@ -65,8 +65,9 @@ section{position:relative;z-index:1;padding:80px 48px;border-top:1px solid var(-
 
 /* ── PLAY MODES ───────────────────────────────────────── */
 #play{background:var(--bg)}
-.play-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
-@media(max-width:860px){.play-grid{grid-template-columns:1fr}}
+.play-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:40px}
+@media(max-width:1100px){.play-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.play-grid{grid-template-columns:1fr}}
 .mode-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px 26px 26px;text-decoration:none;color:inherit;display:flex;flex-direction:column;position:relative;overflow:hidden;transition:transform .25s,border-color .25s,box-shadow .25s}
 .mode-card::after{content:'';position:absolute;inset:0;border-radius:16px;background:radial-gradient(ellipse at 70% -10%,var(--card-glow,transparent) 0%,transparent 60%);opacity:0;transition:opacity .25s;pointer-events:none}
 .mode-card:hover{transform:translateY(-5px);border-color:var(--card-accent,var(--border2))}
@@ -75,6 +76,7 @@ section{position:relative;z-index:1;padding:80px 48px;border-top:1px solid var(-
 .mc-ai{--card-accent:var(--gold);--card-glow:rgba(201,168,76,.1)}
 .mc-2p{--card-accent:#4a8c5c;--card-glow:rgba(74,140,92,.1)}
 .mc-pz{--card-accent:#4a6e9c;--card-glow:rgba(74,110,156,.1)}
+.mc-online{--card-accent:#c9a84c;--card-glow:rgba(201,168,76,.12)}
 .mc-lrn{--card-accent:#8a6ab0;--card-glow:rgba(138,106,176,.1)}
 .card-corner{position:absolute;top:0;right:0;width:70px;height:70px;opacity:.06;pointer-events:none;background:conic-gradient(from 225deg at 100% 0%,var(--card-accent,#fff) 0 45deg,transparent 45deg)}
 .mode-card:hover .card-corner{opacity:.14}
@@ -84,6 +86,7 @@ section{position:relative;z-index:1;padding:80px 48px;border-top:1px solid var(-
 .mc-ai .mc-badge{background:rgba(201,168,76,.14);color:var(--gold)}
 .mc-2p .mc-badge{background:rgba(74,140,92,.14);color:#5dba70}
 .mc-pz .mc-badge{background:rgba(74,110,156,.14);color:#8ab4f0}
+.mc-online .mc-badge{background:rgba(201,168,76,.18);color:var(--gold)}
 .mc-lrn .mc-badge{background:rgba(138,106,176,.14);color:#b48ee0}
 .mc-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--text);margin-bottom:8px}
 .mc-desc{font-size:.58rem;color:var(--dim2);line-height:1.8;margin-bottom:auto;padding-bottom:20px}
@@ -258,6 +261,15 @@ footer a:hover{color:var(--gold)}
       <div class="mc-desc">Checkmates, knight forks, free captures and pawn promotions. Earn stars, build streaks, and sharpen your tactical eye.</div>
       <div class="mc-pills"><span class="pill">Checkmate</span><span class="pill">Forks</span><span class="pill">Captures</span><span class="pill">Promotion</span></div>
       <div class="mc-go"><span>Solve Puzzles</span><span class="go-arrow">→</span></div>
+    </a>
+    <a class="mode-card mc-online" href="multiplayer.html">
+      <div class="card-corner"></div>
+      <div class="mc-icon">🌐</div>
+      <span class="mc-badge">Real-time · New</span>
+      <div class="mc-title">Play Online</div>
+      <div class="mc-desc">Find a friend, search by username and challenge them to a live game. Moves sync instantly in real time.</div>
+      <div class="mc-pills"><span class="pill">Live Games</span><span class="pill">Player Search</span><span class="pill">Challenges</span></div>
+      <div class="mc-go"><span>Find Players</span><span class="go-arrow">→</span></div>
     </a>
     <a class="mode-card mc-lrn" href="learn.html">
       <div class="card-corner"></div>
@@ -488,7 +500,7 @@ footer a:hover{color:var(--gold)}
 // ── Leaderboard preview ──────────────────────────────────────
 (async function(){
   try{
-    const r=await fetch('https://chess-game-1p5j.onrender.com/api/leaderboard');
+    const r=await fetch('https://chess-game-xxxx.onrender.com/api/leaderboard');
     const d=await r.json();
     const rows=(d.leaderboard||[]).slice(0,8);
     const myName=(()=>{try{return JSON.parse(localStorage.getItem('chess_user')||'null')?.username}catch{return null}})();
