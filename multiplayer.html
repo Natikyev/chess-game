@@ -301,7 +301,7 @@ function initSocket() {
   // Challenge accepted — start game
   socket.on('challenge_accepted', data => {
     toast('✅ ' + data.opponent + ' accepted! Starting game...');
-    setTimeout(() => startGame(data.roomId, data.color, data.opponent), 1000);
+    startGame(data.roomId, data.color, data.opponent);
   });
 
   // Challenge declined

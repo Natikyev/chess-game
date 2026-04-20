@@ -370,12 +370,16 @@ io.on('connection', (socket) => {
   // Join room
   socket.on('join_room', ({ roomId, username, color }) => {
     socket.join(roomId);
-    const room = gameRooms.get(roomId);
-    if (!room) return;
+    let room = gameRooms.get(roomId);
+    if (!room) {
+      // First player arrived — create placeholder
+      room = { white: null, black: null, started: false, joinedSockets: new Set() };
+      gameRooms.set(roomId, room);
+    }
+    if (!room.joinedSockets) room.joinedSockets = new Set();
+    room.joinedSockets.add(socket.id);
 
-    // Check if both players joined
-    const roomSockets = io.sockets.adapter.rooms.get(roomId);
-    if (roomSockets && roomSockets.size >= 2 && !room.started) {
+    if (room.joinedSockets.size >= 2 && !room.started) {
       room.started = true;
       io.to(roomId).emit('game_start', { roomId });
     }

@@ -41,24 +41,61 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* ── BOARD ── */
-.board-section{display:flex;flex-direction:column;align-items:center}
-#board{width:480px;height:480px;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid var(--border2);border-radius:4px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.7)}
-@media(max-width:520px){#board{width:calc(100vw - 48px);height:calc(100vw - 48px)}}
-.sq{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:background .1s}
-.sq.light{background:var(--light-sq)}
-.sq.dark{background:var(--dark-sq)}
-.sq.selected{background:var(--highlight)!important}
-.sq.last-move{background:rgba(255,255,0,.22)!important}
-.sq.legal::after{content:'';position:absolute;width:30%;height:30%;border-radius:50%;background:var(--move-dot);pointer-events:none}
-.sq.legal.has-piece::after{width:100%;height:100%;border-radius:0;background:transparent;border:3px solid rgba(0,0,0,.22)}
-.piece{width:85%;height:85%;pointer-events:none;user-select:none}
+.board-section{display:flex;flex-direction:column;align-items:flex-start}
+.board-with-coords{display:flex;align-items:stretch}
+#board{
+  width:480px;height:480px;
+  display:grid;grid-template-columns:repeat(8,1fr);
+  border:2px solid #5a4a3a;
+  box-shadow:0 24px 64px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04);
+  flex-shrink:0;
+}
+@media(max-width:560px){
+  #board{width:min(calc(100vw - 60px),480px);height:min(calc(100vw - 60px),480px)}
+}
+.sq{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:filter .08s}
+.sq.light{background:#f0d9b5}
+.sq.dark{background:#b58863}
+.sq:hover{filter:brightness(1.08)}
+.sq.selected{outline:3px solid rgba(20,160,40,.7);outline-offset:-3px;z-index:2}
+.sq.last-move.light{background:#cdd16f}
+.sq.last-move.dark{background:#aaa23a}
+.sq.legal::after{
+  content:'';position:absolute;
+  width:34%;height:34%;border-radius:50%;
+  background:rgba(0,0,0,.18);pointer-events:none;z-index:1
+}
+.sq.legal.has-piece::after{
+  width:100%;height:100%;border-radius:0;
+  background:transparent;
+  box-shadow:inset 0 0 0 4px rgba(0,0,0,.25);
+}
+.piece{width:82%;height:82%;pointer-events:none;user-select:none;position:relative;z-index:2;display:block}
 
-/* Coords */
-.coord-file{display:flex;width:480px;padding:0 3px}
-.coord-file span,.coord-rank span{font-size:.45rem;color:var(--dim2);font-family:'DM Mono',monospace}
-.coord-file{justify-content:space-around;margin-top:2px}
-.coord-rank{display:flex;flex-direction:column;justify-content:space-around;height:480px;margin-right:4px}
-@media(max-width:520px){.coord-file,.coord-rank{width:calc(100vw - 48px)}.coord-rank{height:calc(100vw - 48px)}}
+/* Rank coords (left side, inside board height) */
+.coord-rank{
+  width:16px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  height:480px;
+}
+.coord-rank span{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  font-size:.42rem;color:var(--dim2);font-family:'DM Mono',monospace;
+}
+/* File coords (bottom, aligned under board) */
+.coord-file{
+  display:flex;
+  width:480px;height:14px;
+  margin-top:3px;margin-left:16px;
+}
+.coord-file span{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  font-size:.42rem;color:var(--dim2);font-family:'DM Mono',monospace;
+}
+@media(max-width:560px){
+  .coord-rank{height:min(calc(100vw - 60px),480px)}
+  .coord-file{width:min(calc(100vw - 60px),480px)}
+}
 
 /* ── SIDE PANEL ── */
 .side-panel{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
@@ -131,7 +168,7 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 <div class="game-wrap" id="gameWrap">
   <div class="board-section">
     <!-- Opponent bar -->
-    <div class="player-bar" id="opponentBar">
+    <div class="player-bar" id="opponentBar" style="width:496px;max-width:calc(100vw - 24px)">
       <div class="pb-avatar" id="oppAvatar">?</div>
       <div>
         <div class="pb-name" id="oppName">Opponent</div>
@@ -141,14 +178,14 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
     </div>
 
     <!-- Rank coords + board -->
-    <div style="display:flex;align-items:center">
+    <div class="board-with-coords">
       <div class="coord-rank" id="rankCoords"></div>
       <div id="board"></div>
     </div>
     <div class="coord-file" id="fileCoords"></div>
 
     <!-- My bar -->
-    <div class="player-bar" id="myBar" style="margin-top:6px">
+    <div class="player-bar" id="myBar" style="margin-top:6px;width:496px;max-width:calc(100vw - 24px)">
       <div class="pb-avatar" id="myAvatar">♟</div>
       <div>
         <div class="pb-name" id="myName">You</div>
@@ -254,20 +291,37 @@ let lastMove = null;
 let moveHistory = [];
 
 // ── Socket ────────────────────────────────────────────────────
-const socket = io({ auth: { token } });
+const socket = io({ auth: { token }, reconnectionAttempts: 5 });
+
+let gameStarted = false;
+let gameStartTimeout = null;
+
+function tryStartGame() {
+  if (gameStarted) return;
+  gameStarted = true;
+  if (gameStartTimeout) clearTimeout(gameStartTimeout);
+  setStatus(myColor === 'white' ? 'Your turn (White)' : "Opponent's turn (White)");
+  startClock();
+}
 
 socket.on('connect', () => {
   setStatus('Connected. Waiting for opponent...');
   socket.emit('join_room', { roomId, username: user?.username, color: myColor });
+  // Fallback if game_start never arrives due to race condition
+  gameStartTimeout = setTimeout(() => {
+    if (!gameStarted) tryStartGame();
+  }, 4000);
 });
 
-socket.on('game_start', data => {
-  setStatus(myColor === 'white' ? 'Your turn (White)' : "Opponent's turn (White)");
-  startClock();
-});
+socket.on('game_start', () => { tryStartGame(); });
 
 socket.on('opponent_move', data => {
-  applyMove(data.from, data.to, data.promotion);
+  const fr = data.from.r, fc = data.from.c;
+  const tr = data.to.r,   tc = data.to.c;
+  applyMove(fr, fc, tr, tc, data.promotion);
+  turn = turn === 'white' ? 'black' : 'white'; // now it's our turn
+  const piece = board[tr][tc];
+  addMoveToHistory(piece || '?', fr, fc, tr, tc);
   switchClock();
   updateStatus();
 });
@@ -466,10 +520,11 @@ function doMove(fr, fc, tr, tc) {
 
 function applyMove(fr, fc, tr, tc, promotion) {
   const piece = board[fr][fc];
+  if (!piece) return; // guard against bad data
   board[tr][tc] = promotion || piece;
   board[fr][fc] = null;
 
-  // En passant
+  // En passant capture
   if ((piece === 'P' || piece === 'p') && fc !== tc && !board[tr][tc]) {
     board[fr][tc] = null;
   }
@@ -480,7 +535,7 @@ function applyMove(fr, fc, tr, tc, promotion) {
   if (piece === 'k' && fc === 4 && tc === 2) { board[7][3] = 'r'; board[7][0] = null; }
 
   lastMove = { fr, fc, tr, tc };
-  turn = turn === 'white' ? 'black' : 'white';
+  // NOTE: turn is NOT changed here — caller handles it
   renderBoard();
 }
 
