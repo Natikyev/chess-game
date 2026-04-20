@@ -8,153 +8,145 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0e0d0a;--panel:#161410;--panel2:#1c1a16;--border:#2a2620;--border2:#3a3630;
-  --gold:#c9a84c;--gold2:#e8c97a;
-  --text:#f2e8d5;--dim:#6b6050;--dim2:#9a8e7a;
-  --green:#4a8c5c;--red:#9c4a4a;
-  --light-sq:#f0d9b5;--dark-sq:#b58863;
-  --highlight:rgba(255,255,0,.35);--move-dot:rgba(0,0,0,.22);
+  --bg:#1a1a1a;
+  --panel:#242424;
+  --panel2:#2c2c2c;
+  --border:#383838;
+  --border2:#484848;
+  --gold:#c9a84c;
+  --gold2:#e8c97a;
+  --text:#e8e8e8;
+  --dim:#777;
+  --dim2:#aaa;
+  --green:#4caf50;
+  --red:#e05050;
 }
-body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  opacity:.025;background-size:160px}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:14px 12px}
 
 /* ── HEADER ── */
-header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;width:100%;max-width:820px;margin-bottom:16px}
+header{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:860px;margin-bottom:12px}
 .logo{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--gold);text-decoration:none}
-.back-btn{padding:6px 14px;border:1px solid var(--border2);border-radius:6px;color:var(--dim2);font-size:.58rem;text-decoration:none;transition:all .15s}
+.back-btn{padding:5px 13px;border:1px solid var(--border2);border-radius:6px;color:var(--dim2);font-size:.57rem;text-decoration:none;transition:all .15s}
 .back-btn:hover{border-color:var(--gold);color:var(--gold)}
 
-/* ── GAME WRAP ── */
-.game-wrap{position:relative;z-index:1;display:flex;gap:16px;align-items:flex-start;width:100%;max-width:820px}
-@media(max-width:700px){.game-wrap{flex-direction:column;align-items:center}}
+/* ── LAYOUT ── */
+.game-wrap{display:flex;gap:16px;align-items:flex-start;width:100%;max-width:860px}
+@media(max-width:720px){.game-wrap{flex-direction:column;align-items:center}}
 
 /* ── PLAYER BARS ── */
-.player-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;width:100%}
+.player-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--panel);border:1px solid var(--border);border-radius:8px;margin-bottom:5px}
 .player-bar.active{border-color:var(--gold);background:rgba(201,168,76,.07)}
-.pb-avatar{width:32px;height:32px;border-radius:50%;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
-.pb-name{font-size:.65rem;color:var(--text);flex:1}
-.pb-rating{font-size:.55rem;color:var(--dim2)}
-.pb-clock{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--text);min-width:52px;text-align:right}
-.pb-clock.low{color:#e05050;animation:blink .8s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.pb-avatar{width:30px;height:30px;border-radius:50%;background:var(--border2);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;border:2px solid var(--border)}
+.pb-info{flex:1;min-width:0}
+.pb-name{font-size:.63rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb-rating{font-size:.52rem;color:var(--dim2)}
+.pb-clock{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--text);min-width:56px;text-align:right;font-weight:600}
+.pb-clock.low{color:var(--red);animation:blink .7s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ── BOARD ── */
+/* ── BOARD SECTION ── */
 .board-section{display:flex;flex-direction:column;align-items:flex-start}
-.board-with-coords{display:flex;align-items:stretch}
+
+/* Wrapper with rank labels inside */
+.board-outer{display:flex;flex-direction:column}
+.board-row{display:flex}
+
+/* Rank column */
+.rank-col{width:20px;display:flex;flex-direction:column;justify-content:stretch}
+.rank-col span{flex:1;display:flex;align-items:center;justify-content:center;font-size:.46rem;color:#777;font-family:'DM Mono',monospace;line-height:1}
+
+/* The board itself */
 #board{
   width:480px;height:480px;
   display:grid;grid-template-columns:repeat(8,1fr);
-  border:2px solid #5a4a3a;
-  box-shadow:0 24px 64px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04);
+  border:2px solid #555;
+  box-shadow:0 10px 40px rgba(0,0,0,.7);
   flex-shrink:0;
 }
 @media(max-width:560px){
-  #board{width:min(calc(100vw - 60px),480px);height:min(calc(100vw - 60px),480px)}
+  #board{width:min(calc(100vw - 56px),480px);height:min(calc(100vw - 56px),480px)}
+  .rank-col{display:none}
 }
-.sq{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:filter .08s}
-.sq.light{background:#f0d9b5}
-.sq.dark{background:#b58863}
-.sq:hover{filter:brightness(1.08)}
-.sq.selected{outline:3px solid rgba(20,160,40,.7);outline-offset:-3px;z-index:2}
-.sq.last-move.light{background:#cdd16f}
-.sq.last-move.dark{background:#aaa23a}
-.sq.legal::after{
-  content:'';position:absolute;
-  width:34%;height:34%;border-radius:50%;
-  background:rgba(0,0,0,.18);pointer-events:none;z-index:1
-}
-.sq.legal.has-piece::after{
-  width:100%;height:100%;border-radius:0;
-  background:transparent;
-  box-shadow:inset 0 0 0 4px rgba(0,0,0,.25);
-}
-.piece{width:82%;height:82%;pointer-events:none;user-select:none;position:relative;z-index:2;display:block}
 
-/* Rank coords (left side, inside board height) */
-.coord-rank{
-  width:16px;flex-shrink:0;
-  display:flex;flex-direction:column;
-  height:480px;
-}
-.coord-rank span{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  font-size:.42rem;color:var(--dim2);font-family:'DM Mono',monospace;
-}
-/* File coords (bottom, aligned under board) */
-.coord-file{
-  display:flex;
-  width:480px;height:14px;
-  margin-top:3px;margin-left:16px;
-}
-.coord-file span{
-  flex:1;display:flex;align-items:center;justify-content:center;
-  font-size:.42rem;color:var(--dim2);font-family:'DM Mono',monospace;
-}
-@media(max-width:560px){
-  .coord-rank{height:min(calc(100vw - 60px),480px)}
-  .coord-file{width:min(calc(100vw - 60px),480px)}
-}
+/* File row */
+.file-row{display:flex;width:480px;height:18px;margin-left:20px}
+.file-row span{flex:1;display:flex;align-items:center;justify-content:center;font-size:.46rem;color:#777;font-family:'DM Mono',monospace}
+@media(max-width:560px){.file-row{width:calc(100vw - 56px);margin-left:0}}
+
+/* ── SQUARES ── */
+.sq{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.sq.light{background:#f0d9b5}
+.sq.dark {background:#b58863}
+.sq.selected.light{background:#829769}
+.sq.selected.dark {background:#646f40}
+.sq.last-move.light{background:#cdd26a}
+.sq.last-move.dark {background:#aaa23a}
+/* legal dot */
+.sq.legal::after{content:'';position:absolute;width:33%;height:33%;border-radius:50%;background:rgba(0,0,0,.19);pointer-events:none;z-index:3}
+/* legal capture ring */
+.sq.legal.has-piece::after{width:100%;height:100%;border-radius:0;background:transparent;box-shadow:inset 0 0 0 5px rgba(0,0,0,.22)}
+
+/* ── PIECES ── */
+.piece{width:100%;height:100%;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}
+.piece svg{width:80%;height:80%;display:block}
 
 /* ── SIDE PANEL ── */
-.side-panel{width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
-@media(max-width:700px){.side-panel{width:100%;max-width:480px}}
+.side-panel{flex:1;min-width:200px;max-width:230px;display:flex;flex-direction:column;gap:10px}
+@media(max-width:720px){.side-panel{width:100%;max-width:500px}}
 
-.status-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
-.status-label{font-size:.5rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
-.status-text{font-size:.68rem;color:var(--text);line-height:1.5}
+.panel-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.card-label{font-size:.47rem;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.status-text{font-size:.65rem;color:var(--text);line-height:1.5;font-weight:500}
 
-.moves-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;flex:1}
-.moves-list{max-height:200px;overflow-y:auto;font-size:.58rem;color:var(--dim2);line-height:2;scrollbar-width:thin}
-.move-pair{display:flex;gap:6px}
-.move-num{color:var(--dim);min-width:20px}
-.move-w,.move-b{flex:1;padding:1px 4px;border-radius:3px;cursor:default}
+.moves-list{max-height:150px;overflow-y:auto;font-size:.56rem;color:var(--dim2);scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.move-pair{display:flex;gap:4px;align-items:center;padding:1px 0}
+.move-num{color:var(--dim);min-width:22px;font-size:.51rem}
+.move-w,.move-b{flex:1;padding:2px 4px;border-radius:3px}
 .move-w:hover,.move-b:hover{background:var(--border2);color:var(--text)}
 
-.game-btns{display:flex;flex-direction:column;gap:8px}
-.g-btn{padding:10px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s;text-align:center;border:1px solid var(--border2);background:transparent;color:var(--dim2)}
+.game-btns{display:flex;flex-direction:column;gap:6px}
+.g-btn{padding:9px;border-radius:7px;font-family:'DM Mono',monospace;font-size:.57rem;cursor:pointer;text-align:center;border:1px solid var(--border2);background:transparent;color:var(--dim2);transition:all .15s}
 .g-btn:hover{border-color:var(--gold);color:var(--gold)}
 .g-btn.danger:hover{border-color:var(--red);color:#e08080}
 
 /* ── CHAT ── */
-.chat-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
-.chat-title{font-size:.5rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;padding:12px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
-.chat-unread{background:var(--gold);color:#0e0d0a;font-size:.45rem;padding:1px 6px;border-radius:10px;font-weight:700;display:none}
+.chat-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{font-size:.47rem;letter-spacing:.15em;color:var(--dim);text-transform:uppercase;padding:10px 12px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.chat-unread{background:var(--gold);color:#1a1a1a;font-size:.43rem;padding:1px 5px;border-radius:8px;font-weight:700;display:none}
 .chat-unread.show{display:inline-block}
-.chat-messages{height:160px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
-.chat-msg{display:flex;flex-direction:column;gap:2px;animation:msgIn .2s ease}
-@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.chat-messages{height:190px;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.chat-empty{text-align:center;color:var(--dim);font-size:.57rem;padding:28px 0}
+.chat-msg{display:flex;flex-direction:column;gap:2px}
 .chat-msg.mine{align-items:flex-end}
 .chat-msg.theirs{align-items:flex-start}
-.msg-bubble{padding:6px 10px;border-radius:8px;font-size:.6rem;line-height:1.5;max-width:85%;word-break:break-word}
-.chat-msg.mine .msg-bubble{background:rgba(201,168,76,.18);color:var(--text);border-bottom-right-radius:2px}
-.chat-msg.theirs .msg-bubble{background:var(--panel2);color:var(--text);border-bottom-left-radius:2px;border:1px solid var(--border)}
-.msg-name{font-size:.5rem;color:var(--dim2);padding:0 4px}
-.chat-input-wrap{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--border)}
-.chat-input{flex:1;background:#0a0908;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.6rem;outline:none;transition:border-color .15s}
+.msg-sender{font-size:.47rem;color:var(--dim2);padding:0 4px}
+.msg-bubble{padding:6px 10px;border-radius:8px;font-size:.59rem;line-height:1.5;max-width:90%;word-break:break-word}
+.chat-msg.mine   .msg-bubble{background:rgba(201,168,76,.18);color:var(--text);border-bottom-right-radius:2px}
+.chat-msg.theirs .msg-bubble{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:2px}
+.chat-input-row{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--border)}
+.chat-input{flex:1;background:#181818;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:.59rem;outline:none;transition:border-color .15s}
 .chat-input:focus{border-color:var(--gold)}
 .chat-input::placeholder{color:var(--dim)}
-.chat-send{padding:7px 12px;background:var(--gold);color:#0e0d0a;border:none;border-radius:6px;font-family:'DM Mono',monospace;font-size:.6rem;font-weight:600;cursor:pointer;transition:background .15s;flex-shrink:0}
-.chat-send:hover{background:var(--gold2)}
-.chat-empty{text-align:center;color:var(--dim);font-size:.58rem;padding:20px 0}
+.chat-send-btn{padding:7px 13px;background:var(--gold);color:#1a1a1a;border:none;border-radius:6px;font-family:'DM Mono',monospace;font-size:.59rem;font-weight:700;cursor:pointer;transition:background .15s;flex-shrink:0}
+.chat-send-btn:hover{background:var(--gold2)}
 
 /* ── OVERLAYS ── */
-.overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)}
+.overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78);backdrop-filter:blur(6px)}
 .overlay.show{display:flex}
-.overlay-box{background:var(--panel);border:1px solid var(--border2);border-radius:16px;padding:36px 32px;text-align:center;max-width:360px;width:90%;animation:pop .25s ease}
+.overlay-box{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:34px 30px;text-align:center;max-width:340px;width:90%;animation:pop .22s ease}
 @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-.overlay-icon{font-size:2.5rem;margin-bottom:12px}
-.overlay-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--text);margin-bottom:8px}
-.overlay-sub{font-size:.62rem;color:var(--dim2);line-height:1.7;margin-bottom:22px}
+.overlay-icon{font-size:2.4rem;margin-bottom:10px}
+.overlay-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--text);margin-bottom:7px}
+.overlay-sub{font-size:.61rem;color:var(--dim2);line-height:1.7;margin-bottom:20px}
 .overlay-btns{display:flex;gap:10px;justify-content:center}
-.o-btn{padding:10px 22px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;transition:all .15s;border:none;font-weight:500}
-.o-btn.primary{background:var(--gold);color:#0e0d0a}
+.o-btn{padding:10px 20px;border-radius:7px;font-family:'DM Mono',monospace;font-size:.6rem;cursor:pointer;transition:all .15s;border:none;font-weight:500}
+.o-btn.primary{background:var(--gold);color:#1a1a1a}
 .o-btn.primary:hover{background:var(--gold2)}
 .o-btn.secondary{background:transparent;color:var(--dim2);border:1px solid var(--border2)}
 .o-btn.secondary:hover{border-color:var(--gold);color:var(--gold)}
 
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--gold);color:#0e0d0a;padding:10px 24px;border-radius:8px;font-size:.68rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+/* ── TOAST ── */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--gold);color:#1a1a1a;padding:10px 22px;border-radius:8px;font-size:.65rem;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.5);opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;white-space:nowrap}
 #toast.show{opacity:1}
 </style>
 </head>
@@ -165,102 +157,108 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
   <a class="back-btn" href="multiplayer.html">← Back to Lobby</a>
 </header>
 
-<div class="game-wrap" id="gameWrap">
+<div class="game-wrap">
   <div class="board-section">
+
     <!-- Opponent bar -->
-    <div class="player-bar" id="opponentBar" style="width:496px;max-width:calc(100vw - 24px)">
+    <div class="player-bar" id="opponentBar">
       <div class="pb-avatar" id="oppAvatar">?</div>
-      <div>
+      <div class="pb-info">
         <div class="pb-name" id="oppName">Opponent</div>
         <div class="pb-rating" id="oppRating">⚡—</div>
       </div>
       <div class="pb-clock" id="oppClock">10:00</div>
     </div>
 
-    <!-- Rank coords + board -->
-    <div class="board-with-coords">
-      <div class="coord-rank" id="rankCoords"></div>
-      <div id="board"></div>
+    <!-- Board outer with rank labels -->
+    <div class="board-outer">
+      <div class="board-row">
+        <div class="rank-col" id="rankCol"></div>
+        <div id="board"></div>
+      </div>
+      <div class="file-row" id="fileRow"></div>
     </div>
-    <div class="coord-file" id="fileCoords"></div>
 
     <!-- My bar -->
-    <div class="player-bar" id="myBar" style="margin-top:6px;width:496px;max-width:calc(100vw - 24px)">
+    <div class="player-bar" id="myBar" style="margin-top:5px">
       <div class="pb-avatar" id="myAvatar">♟</div>
-      <div>
+      <div class="pb-info">
         <div class="pb-name" id="myName">You</div>
         <div class="pb-rating" id="myRating">⚡—</div>
       </div>
       <div class="pb-clock" id="myClock">10:00</div>
     </div>
-  </div>
+
+  </div><!-- /board-section -->
 
   <!-- Side panel -->
   <div class="side-panel">
-    <div class="status-card">
-      <div class="status-label">Status</div>
-      <div class="status-text" id="statusText">Connecting...</div>
+
+    <div class="panel-card">
+      <div class="card-label">Status</div>
+      <div class="status-text" id="statusText">Connecting…</div>
     </div>
-    <div class="moves-card">
-      <div class="status-label">Moves</div>
+
+    <div class="panel-card">
+      <div class="card-label">Moves</div>
       <div class="moves-list" id="movesList"></div>
     </div>
+
     <div class="game-btns">
-      <button class="g-btn" onclick="offerDraw()">½ Offer Draw</button>
+      <button class="g-btn"        onclick="offerDraw()">½ Offer Draw</button>
       <button class="g-btn danger" onclick="confirmResign()">🏳 Resign</button>
     </div>
 
     <!-- Chat -->
     <div class="chat-card">
-      <div class="chat-title">
+      <div class="chat-header">
         💬 Chat
         <span class="chat-unread" id="chatUnread">0</span>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-empty" id="chatEmpty">No messages yet</div>
       </div>
-      <div class="chat-input-wrap">
-        <input class="chat-input" id="chatInput" type="text" placeholder="Type a message..." maxlength="200" autocomplete="off">
-        <button class="chat-send" onclick="sendChatMessage()">Send</button>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Type a message…" maxlength="200" autocomplete="off">
+        <button class="chat-send-btn" id="chatSendBtn">Send</button>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Result overlay -->
+  </div><!-- /side-panel -->
+</div><!-- /game-wrap -->
+
+<!-- Overlays -->
 <div class="overlay" id="resultOverlay">
   <div class="overlay-box">
     <div class="overlay-icon" id="resultIcon">♟</div>
     <div class="overlay-title" id="resultTitle">Game Over</div>
-    <div class="overlay-sub" id="resultSub"></div>
+    <div class="overlay-sub"   id="resultSub"></div>
     <div class="overlay-btns">
-      <a class="o-btn primary" href="multiplayer.html">Find New Game</a>
+      <a class="o-btn primary"   href="multiplayer.html">New Game</a>
       <a class="o-btn secondary" href="home.html">Home</a>
     </div>
   </div>
 </div>
 
-<!-- Resign confirm overlay -->
 <div class="overlay" id="resignOverlay">
   <div class="overlay-box">
     <div class="overlay-icon">🏳</div>
     <div class="overlay-title">Resign?</div>
-    <div class="overlay-sub">Are you sure you want to resign this game?</div>
+    <div class="overlay-sub">Are you sure you want to resign?</div>
     <div class="overlay-btns">
-      <button class="o-btn primary" onclick="doResign()">Yes, Resign</button>
-      <button class="o-btn secondary" onclick="closeResign()">Cancel</button>
+      <button class="o-btn primary"   onclick="doResign()">Yes, Resign</button>
+      <button class="o-btn secondary" onclick="closeOverlay('resignOverlay')">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Draw offer overlay -->
 <div class="overlay" id="drawOverlay">
   <div class="overlay-box">
     <div class="overlay-icon">🤝</div>
     <div class="overlay-title" id="drawTitle">Draw Offer</div>
-    <div class="overlay-sub" id="drawSub">Your opponent offered a draw.</div>
+    <div class="overlay-sub"   id="drawSub">Opponent offered a draw.</div>
     <div class="overlay-btns" id="drawBtns">
-      <button class="o-btn primary" onclick="acceptDraw()">Accept</button>
+      <button class="o-btn primary"   onclick="acceptDraw()">Accept</button>
       <button class="o-btn secondary" onclick="declineDraw()">Decline</button>
     </div>
   </div>
@@ -270,502 +268,325 @@ header{position:relative;z-index:10;display:flex;align-items:center;justify-cont
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-// ── Config ────────────────────────────────────────────────────
-const TOTAL_TIME = 10 * 60; // 10 minutes each
-let myColor   = localStorage.getItem('mp_color') || 'white';
-let roomId    = localStorage.getItem('mp_room') || '';
-let opponent  = localStorage.getItem('mp_opponent') || 'Opponent';
-const token   = localStorage.getItem('chess_token');
-const user    = JSON.parse(localStorage.getItem('chess_user') || 'null');
-const rating  = JSON.parse(localStorage.getItem('chess_rating') || 'null');
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const TOTAL_TIME = 10 * 60;
+let myColor  = localStorage.getItem('mp_color')    || 'white';
+let roomId   = localStorage.getItem('mp_room')     || '';
+let opponent = localStorage.getItem('mp_opponent') || 'Opponent';
+const token  = localStorage.getItem('chess_token');
+const user   = JSON.parse(localStorage.getItem('chess_user')   || 'null');
+const rating = JSON.parse(localStorage.getItem('chess_rating') || 'null');
+const flipped = myColor === 'black';
 
-// ── Board State ───────────────────────────────────────────────
-let board = null;
-let selected = null;
-let legalMoves = [];
-let turn = 'white';
-let myTime = TOTAL_TIME, oppTime = TOTAL_TIME;
-let clockInterval = null;
-let gameOver = false;
-let lastMove = null;
-let moveHistory = [];
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let board = null, selected = null, legalMoves = [], turn = 'white';
+let myTime = TOTAL_TIME, oppTime = TOTAL_TIME, clockInterval = null;
+let gameOver = false, lastMove = null, moveHistory = [];
+let gameStarted = false, gameStartTimeout = null;
 
-// ── Socket ────────────────────────────────────────────────────
-const socket = io({ auth: { token }, reconnectionAttempts: 5 });
-
-let gameStarted = false;
-let gameStartTimeout = null;
-
-function tryStartGame() {
-  if (gameStarted) return;
-  gameStarted = true;
-  if (gameStartTimeout) clearTimeout(gameStartTimeout);
-  setStatus(myColor === 'white' ? 'Your turn (White)' : "Opponent's turn (White)");
-  startClock();
-}
-
-socket.on('connect', () => {
-  setStatus('Connected. Waiting for opponent...');
-  socket.emit('join_room', { roomId, username: user?.username, color: myColor });
-  // Fallback if game_start never arrives due to race condition
-  gameStartTimeout = setTimeout(() => {
-    if (!gameStarted) tryStartGame();
-  }, 4000);
-});
-
-socket.on('game_start', () => { tryStartGame(); });
-
-socket.on('opponent_move', data => {
-  const fr = data.from.r, fc = data.from.c;
-  const tr = data.to.r,   tc = data.to.c;
-  applyMove(fr, fc, tr, tc, data.promotion);
-  turn = turn === 'white' ? 'black' : 'white'; // now it's our turn
-  const piece = board[tr][tc];
-  addMoveToHistory(piece || '?', fr, fc, tr, tc);
-  switchClock();
-  updateStatus();
-});
-
-socket.on('game_over', data => {
-  gameOver = true;
-  stopClock();
-  showResult(data.reason, data.winner);
-});
-
-socket.on('draw_offered', () => {
-  document.getElementById('drawTitle').textContent = 'Draw Offered';
-  document.getElementById('drawSub').textContent = opponent + ' is offering a draw.';
-  document.getElementById('drawBtns').style.display = 'flex';
-  document.getElementById('drawOverlay').classList.add('show');
-});
-
-socket.on('draw_declined', () => {
-  toast('Draw offer declined.');
-});
-
-socket.on('chat_message', data => {
-  addChatMessage(data.from, data.text, false);
-  // Show unread badge if chat is scrolled up
-  const msgs = document.getElementById('chatMessages');
-  const isAtBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 40;
-  if (!isAtBottom) {
-    const badge = document.getElementById('chatUnread');
-    badge.classList.add('show');
-    badge.textContent = (parseInt(badge.textContent) || 0) + 1;
-  }
-});
-
-socket.on('opponent_disconnected', () => {
-  gameOver = true;
-  stopClock();
-  showResult('opponent_disconnect', user?.username);
-});
-
-// ── UI Init ───────────────────────────────────────────────────
-document.getElementById('myAvatar').textContent = user ? user.username.charAt(0).toUpperCase() : '?';
-document.getElementById('myName').textContent = user ? user.username : 'You';
-document.getElementById('myRating').textContent = '⚡' + (rating?.rating || '—');
-document.getElementById('oppAvatar').textContent = opponent.charAt(0).toUpperCase();
-document.getElementById('oppName').textContent = opponent;
-
-// Build coords
-const files = ['a','b','c','d','e','f','g','h'];
-const ranks = ['8','7','6','5','4','3','2','1'];
-const fc = document.getElementById('fileCoords');
-const rc = document.getElementById('rankCoords');
-(myColor === 'white' ? files : [...files].reverse()).forEach(f => {
-  const s = document.createElement('span'); s.textContent = f; fc.appendChild(s);
-});
-(myColor === 'white' ? ranks : [...ranks].reverse()).forEach(r => {
-  const s = document.createElement('span'); s.textContent = r; rc.appendChild(s);
-});
-
-// ── Chess Engine (simplified) ─────────────────────────────────
-const INIT_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
-
-const SVG_PIECES = {
+// ═══════════════════════════════════════
+// PIECES — inline SVG, rendered via innerHTML
+// ═══════════════════════════════════════
+const PIECES = {
   wK:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6M20 8h5" stroke-linejoin="miter"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#fff" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V17s-6.5-6-13 2c-3 4.5 3 10.5 3 10.5v7" fill="#fff"/><path d="M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0"/></g></svg>`,
   wQ:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#fff" stroke="#000" stroke-width="1.5" stroke-linejoin="round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9 26c8.5-8.5 15.5-9 22.5-.5" stroke-linecap="butt"/><path d="M9 26c1 2.5 3 2 4.5 4 1.5 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1.5-2 3.5-1.5 4.5-4-8-8-14-8.5-22.5-.5z"/><path d="M11.5 30c3.5-6 10.5-6 14 0" fill="none" stroke-linecap="butt"/><path d="M11.5 33.5h22M12 36.5h21M9.5 38h26" fill="none"/></g></svg>`,
   wR:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#fff" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 39h27v-3H9v3zm3-3V12h21v24H12zm-4-21V9h5v2h5V9h4v2h5V9h5v6H8z" stroke-linecap="butt"/><path d="M34 14l-3 3H14l-3-3"/><path d="M31 17v12.5H14V17" fill="#fff" stroke-linecap="butt"/><path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/><path d="M11 14h23" fill="none" stroke-linejoin="miter"/></g></svg>`,
   wB:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#fff" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.46 3-2 3-2z"/><path d="M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z"/><circle cx="22.5" cy="8" r="2.5"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke-linejoin="miter"/></g></svg>`,
   wN:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" fill="#fff"/><path d="M24 18c.38 5.12-4.12 6.51-6.5 3.5" fill="#fff"/><path d="M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" fill="#000" stroke="#000"/><path d="M14.933 15.75a5 5 0 0 1-6.183 6.433" stroke-linecap="butt"/></g></svg>`,
   wP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#fff" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-  bK:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6" stroke-linejoin="miter"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#1a1a1a" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V17s-6.5-6-13 2c-3 4.5 3 10.5 3 10.5v7" fill="#1a1a1a"/><path d="M20 8h5" stroke-linejoin="miter"/><path d="M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0" stroke="#ccc"/></g></svg>`,
-  bQ:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#1a1a1a" stroke="#000" stroke-width="1.5" stroke-linejoin="round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9 26c8.5-8.5 15.5-9 22.5-.5" stroke-linecap="butt"/><path d="M9 26c1 2.5 3 2 4.5 4 1.5 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1.5-2 3.5-1.5 4.5-4-8-8-14-8.5-22.5-.5z"/><path d="M11.5 30c3.5-6 10.5-6 14 0" fill="none" stroke="#ccc" stroke-linecap="butt"/><path d="M11.5 33.5h22M12 36.5h21M9.5 38h26" fill="none" stroke="#ccc"/></g></svg>`,
-  bR:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#1a1a1a" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 39h27v-3H9v3zm3-3V12h21v24H12zm-4-21V9h5v2h5V9h4v2h5V9h5v6H8z" stroke-linecap="butt"/><path d="M34 14l-3 3H14l-3-3"/><path d="M31 17v12.5H14V17" stroke-linecap="butt"/><path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/><path d="M11 14h23" fill="none" stroke="#ccc" stroke-linejoin="miter"/></g></svg>`,
-  bB:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#1a1a1a" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.46 3-2 3-2z"/><path d="M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z"/><circle cx="22.5" cy="8" r="2.5"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#ccc" stroke-linejoin="miter"/></g></svg>`,
-  bN:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" fill="#1a1a1a"/><path d="M24 18c.38 5.12-4.12 6.51-6.5 3.5" fill="#1a1a1a"/><path d="M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" fill="#ccc" stroke="#ccc"/><path d="M14.933 15.75a5 5 0 0 1-6.183 6.433" stroke-linecap="butt"/></g></svg>`,
-  bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#1a1a1a" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>`
+  bK:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6" stroke-linejoin="miter"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#333" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V17s-6.5-6-13 2c-3 4.5 3 10.5 3 10.5v7" fill="#333"/><path d="M20 8h5" stroke-linejoin="miter"/><path d="M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0" stroke="#bbb"/></g></svg>`,
+  bQ:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#333" stroke="#000" stroke-width="1.5" stroke-linejoin="round"><circle cx="6" cy="12" r="2.75"/><circle cx="14" cy="9" r="2.75"/><circle cx="22.5" cy="8" r="2.75"/><circle cx="31" cy="9" r="2.75"/><circle cx="39" cy="12" r="2.75"/><path d="M9 26c8.5-8.5 15.5-9 22.5-.5" stroke-linecap="butt"/><path d="M9 26c1 2.5 3 2 4.5 4 1.5 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1.5-2 3.5-1.5 4.5-4-8-8-14-8.5-22.5-.5z"/><path d="M11.5 30c3.5-6 10.5-6 14 0" fill="none" stroke="#bbb" stroke-linecap="butt"/><path d="M11.5 33.5h22M12 36.5h21M9.5 38h26" fill="none" stroke="#bbb"/></g></svg>`,
+  bR:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="#333" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 39h27v-3H9v3zm3-3V12h21v24H12zm-4-21V9h5v2h5V9h4v2h5V9h5v6H8z" stroke-linecap="butt"/><path d="M34 14l-3 3H14l-3-3"/><path d="M31 17v12.5H14V17" stroke-linecap="butt"/><path d="M31 29.5l1.5 2.5h-20l1.5-2.5"/><path d="M11 14h23" fill="none" stroke="#bbb" stroke-linejoin="miter"/></g></svg>`,
+  bB:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#333" stroke-linecap="butt"><path d="M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.46 3-2 3-2z"/><path d="M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z"/><circle cx="22.5" cy="8" r="2.5"/></g><path d="M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5" stroke="#bbb" stroke-linejoin="miter"/></g></svg>`,
+  bN:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" fill="#333"/><path d="M24 18c.38 5.12-4.12 6.51-6.5 3.5" fill="#333"/><path d="M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" fill="#bbb" stroke="#bbb"/><path d="M14.933 15.75a5 5 0 0 1-6.183 6.433" stroke-linecap="butt"/></g></svg>`,
+  bP:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><path d="M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z" fill="#333" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>`
 };
 
-function pieceImg(key) {
-  const img = document.createElement('img');
-  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(SVG_PIECES[key] || '');
-  img.className = 'piece';
-  img.draggable = false;
-  return img;
+function pieceKey(p){ if(!p) return null; return (p===p.toUpperCase()?'w':'b')+p.toUpperCase(); }
+
+// ═══════════════════════════════════════
+// SOCKET
+// ═══════════════════════════════════════
+const socket = io({ auth: { token }, reconnectionAttempts: 5 });
+
+function tryStartGame(){
+  if(gameStarted) return;
+  gameStarted = true;
+  clearTimeout(gameStartTimeout);
+  setStatus(myColor==='white' ? 'Your turn (White)' : "Opponent's turn (White)");
+  startClock();
 }
 
-function fenToBoard(fen) {
-  const rows = fen.split('/');
-  const b = [];
-  for (const row of rows) {
-    const r = [];
-    for (const ch of row) {
-      if (isNaN(ch)) r.push(ch);
-      else for (let i = 0; i < parseInt(ch); i++) r.push(null);
-    }
-    b.push(r);
+socket.on('connect', () => {
+  setStatus('Connected. Waiting for opponent…');
+  socket.emit('join_room', { roomId, username: user?.username, color: myColor });
+  gameStartTimeout = setTimeout(() => { if(!gameStarted) tryStartGame(); }, 4000);
+});
+
+socket.on('game_start', () => tryStartGame());
+
+socket.on('opponent_move', data => {
+  const fr=data.from.r, fc=data.from.c, tr=data.to.r, tc=data.to.c;
+  applyMove(fr, fc, tr, tc, data.promotion);
+  turn = turn==='white' ? 'black' : 'white';
+  addMoveToHistory(board[tr][tc]||'?', fr, fc, tr, tc);
+  switchClock(); updateStatus();
+});
+
+socket.on('game_over',   data => { gameOver=true; stopClock(); showResult(data.reason, data.winner); });
+socket.on('draw_offered', () => {
+  document.getElementById('drawTitle').textContent = 'Draw Offered';
+  document.getElementById('drawSub').textContent   = opponent+' offered a draw.';
+  document.getElementById('drawOverlay').classList.add('show');
+});
+socket.on('draw_declined', () => toast('Draw offer declined.'));
+socket.on('chat_message', data => {
+  addChatMessage(data.from, data.text, false);
+  const msgs = document.getElementById('chatMessages');
+  if(msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight > 40){
+    const b=document.getElementById('chatUnread');
+    b.classList.add('show'); b.textContent=(parseInt(b.textContent)||0)+1;
   }
-  return b;
+});
+socket.on('opponent_disconnected', () => { gameOver=true; stopClock(); showResult('opponent_disconnect', user?.username); });
+
+// ═══════════════════════════════════════
+// UI INIT — player info + coords
+// ═══════════════════════════════════════
+document.getElementById('myAvatar').textContent  = user ? user.username.charAt(0).toUpperCase() : '♟';
+document.getElementById('myName').textContent    = user ? user.username : 'You';
+document.getElementById('myRating').textContent  = '⚡'+(rating?.rating||'—');
+document.getElementById('oppAvatar').textContent = opponent.charAt(0).toUpperCase();
+document.getElementById('oppName').textContent   = opponent;
+
+const FILES=['a','b','c','d','e','f','g','h'];
+const RANKS=['8','7','6','5','4','3','2','1'];
+
+const rankCol = document.getElementById('rankCol');
+const fileRow = document.getElementById('fileRow');
+(flipped ? [...RANKS].reverse() : RANKS).forEach(r => {
+  const s=document.createElement('span'); s.textContent=r; rankCol.appendChild(s);
+});
+(flipped ? [...FILES].reverse() : FILES).forEach(f => {
+  const s=document.createElement('span'); s.textContent=f; fileRow.appendChild(s);
+});
+
+// ═══════════════════════════════════════
+// BOARD ENGINE
+// ═══════════════════════════════════════
+const INIT_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+
+function fenToBoard(fen){
+  return fen.split('/').map(row=>{
+    const r=[];
+    for(const ch of row){ if(isNaN(ch)) r.push(ch); else for(let i=0;i<+ch;i++) r.push(null); }
+    return r;
+  });
 }
 
-function pieceKey(p) {
-  if (!p) return null;
-  const color = p === p.toUpperCase() ? 'w' : 'b';
-  const type = p.toUpperCase();
-  const map = {K:'K',Q:'Q',R:'R',B:'B',N:'N',P:'P'};
-  return color + map[type];
-}
+function initBoard(){ board=fenToBoard(INIT_FEN); renderBoard(); }
 
-function initBoard() {
-  board = fenToBoard(INIT_FEN);
-  renderBoard();
-}
-
-function renderBoard() {
-  const el = document.getElementById('board');
-  el.innerHTML = '';
-  const flipped = myColor === 'black';
-
-  for (let r = 0; r < 8; r++) {
-    for (let c = 0; c < 8; c++) {
-      const dr = flipped ? 7 - r : r;
-      const dc = flipped ? 7 - c : c;
-      const sq = document.createElement('div');
-      const isLight = (dr + dc) % 2 === 0;
-      sq.className = 'sq ' + (isLight ? 'light' : 'dark');
-      sq.dataset.r = dr;
-      sq.dataset.c = dc;
-
-      if (lastMove && ((lastMove.fr === dr && lastMove.fc === dc) || (lastMove.tr === dr && lastMove.tc === dc))) {
-        sq.classList.add('last-move');
+function renderBoard(){
+  const el=document.getElementById('board'); el.innerHTML='';
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const dr=flipped?7-r:r, dc=flipped?7-c:c;
+      const sq=document.createElement('div');
+      sq.className='sq '+((dr+dc)%2===0?'light':'dark');
+      if(lastMove&&((lastMove.fr===dr&&lastMove.fc===dc)||(lastMove.tr===dr&&lastMove.tc===dc))) sq.classList.add('last-move');
+      if(selected&&selected.r===dr&&selected.c===dc) sq.classList.add('selected');
+      if(legalMoves.some(m=>m.r===dr&&m.c===dc)){ sq.classList.add('legal'); if(board[dr][dc]) sq.classList.add('has-piece'); }
+      const p=board[dr][dc];
+      if(p&&PIECES[pieceKey(p)]){
+        const wrap=document.createElement('div'); wrap.className='piece'; wrap.innerHTML=PIECES[pieceKey(p)]; sq.appendChild(wrap);
       }
-      if (selected && selected.r === dr && selected.c === dc) {
-        sq.classList.add('selected');
-      }
-      if (legalMoves.some(m => m.r === dr && m.c === dc)) {
-        sq.classList.add('legal');
-        if (board[dr][dc]) sq.classList.add('has-piece');
-      }
-
-      const piece = board[dr][dc];
-      if (piece) {
-        const key = pieceKey(piece);
-        if (SVG_PIECES[key]) sq.appendChild(pieceImg(key));
-      }
-
-      sq.addEventListener('click', () => onSquareClick(dr, dc));
+      sq.addEventListener('click',()=>onSquareClick(dr,dc));
       el.appendChild(sq);
     }
   }
 }
 
-function onSquareClick(r, c) {
-  if (gameOver) return;
-  if (turn !== myColor) return;
-
-  const piece = board[r][c];
-
-  if (selected) {
-    const isLegal = legalMoves.some(m => m.r === r && m.c === c);
-    if (isLegal) {
-      doMove(selected.r, selected.c, r, c);
-      return;
-    }
-    selected = null;
-    legalMoves = [];
+function onSquareClick(r,c){
+  if(gameOver||turn!==myColor) return;
+  const p=board[r][c];
+  if(selected){
+    if(legalMoves.some(m=>m.r===r&&m.c===c)){ doMove(selected.r,selected.c,r,c); return; }
+    selected=null; legalMoves=[];
   }
-
-  if (piece) {
-    const isMyPiece = myColor === 'white' ? piece === piece.toUpperCase() : piece === piece.toLowerCase();
-    if (isMyPiece) {
-      selected = { r, c };
-      legalMoves = getSimpleLegalMoves(r, c);
-    }
+  if(p){
+    const mine=myColor==='white'?p===p.toUpperCase():p===p.toLowerCase();
+    if(mine){ selected={r,c}; legalMoves=getLegalMoves(r,c); }
   }
   renderBoard();
 }
 
-function doMove(fr, fc, tr, tc) {
-  const piece = board[fr][fc];
-  let promotion = null;
-
-  // Pawn promotion
-  if ((piece === 'P' && tr === 0) || (piece === 'p' && tr === 7)) {
-    promotion = myColor === 'white' ? 'Q' : 'q';
-  }
-
-  applyMove(fr, fc, tr, tc, promotion);
-
-  socket.emit('make_move', { roomId, from: { r: fr, c: fc }, to: { r: tr, c: tc }, promotion });
-
-  selected = null;
-  legalMoves = [];
-  turn = turn === 'white' ? 'black' : 'white';
-  switchClock();
-  updateStatus();
-  addMoveToHistory(piece, fr, fc, tr, tc);
+function doMove(fr,fc,tr,tc){
+  const p=board[fr][fc];
+  let promo=null;
+  if(p==='P'&&tr===0) promo='Q';
+  if(p==='p'&&tr===7) promo='q';
+  applyMove(fr,fc,tr,tc,promo);
+  socket.emit('make_move',{roomId,from:{r:fr,c:fc},to:{r:tr,c:tc},promotion:promo});
+  selected=null; legalMoves=[];
+  turn=turn==='white'?'black':'white';
+  addMoveToHistory(p,fr,fc,tr,tc);
+  switchClock(); updateStatus();
 }
 
-function applyMove(fr, fc, tr, tc, promotion) {
-  const piece = board[fr][fc];
-  if (!piece) return; // guard against bad data
-  board[tr][tc] = promotion || piece;
-  board[fr][fc] = null;
-
-  // En passant capture
-  if ((piece === 'P' || piece === 'p') && fc !== tc && !board[tr][tc]) {
-    board[fr][tc] = null;
-  }
-  // Castling
-  if (piece === 'K' && fc === 4 && tc === 6) { board[0][5] = 'R'; board[0][7] = null; }
-  if (piece === 'K' && fc === 4 && tc === 2) { board[0][3] = 'R'; board[0][0] = null; }
-  if (piece === 'k' && fc === 4 && tc === 6) { board[7][5] = 'r'; board[7][7] = null; }
-  if (piece === 'k' && fc === 4 && tc === 2) { board[7][3] = 'r'; board[7][0] = null; }
-
-  lastMove = { fr, fc, tr, tc };
-  // NOTE: turn is NOT changed here — caller handles it
-  renderBoard();
+function applyMove(fr,fc,tr,tc,promo){
+  const p=board[fr][fc]; if(!p) return;
+  board[tr][tc]=promo||p; board[fr][fc]=null;
+  if((p==='P'||p==='p')&&fc!==tc&&!board[tr][tc]) board[fr][tc]=null;
+  if(p==='K'&&fc===4&&tc===6){board[0][5]='R';board[0][7]=null;}
+  if(p==='K'&&fc===4&&tc===2){board[0][3]='R';board[0][0]=null;}
+  if(p==='k'&&fc===4&&tc===6){board[7][5]='r';board[7][7]=null;}
+  if(p==='k'&&fc===4&&tc===2){board[7][3]='r';board[7][0]=null;}
+  lastMove={fr,fc,tr,tc}; renderBoard();
 }
 
-// Simplified legal moves (basic movement, no check validation — server validates)
-function getSimpleLegalMoves(r, c) {
-  const piece = board[r][c];
-  if (!piece) return [];
-  const moves = [];
-  const isWhite = piece === piece.toUpperCase();
-  const type = piece.toUpperCase();
-
-  function add(nr, nc) {
-    if (nr < 0 || nr > 7 || nc < 0 || nc > 7) return false;
-    const target = board[nr][nc];
-    if (target) {
-      const targetWhite = target === target.toUpperCase();
-      if (targetWhite !== isWhite) moves.push({ r: nr, c: nc });
-      return false;
-    }
-    moves.push({ r: nr, c: nc });
-    return true;
+function getLegalMoves(r,c){
+  const p=board[r][c]; if(!p) return [];
+  const moves=[], white=p===p.toUpperCase(), type=p.toUpperCase();
+  function add(nr,nc){
+    if(nr<0||nr>7||nc<0||nc>7) return false;
+    const t=board[nr][nc];
+    if(t){ if((t===t.toUpperCase())!==white) moves.push({r:nr,c:nc}); return false; }
+    moves.push({r:nr,c:nc}); return true;
   }
-
-  function slide(drs, dcs) {
-    for (let i = 0; i < drs.length; i++) {
-      for (let d = 1; d < 8; d++) {
-        if (!add(r + drs[i]*d, c + dcs[i]*d)) break;
-      }
-    }
+  function slide(drs,dcs){ for(let i=0;i<drs.length;i++) for(let d=1;d<8;d++) if(!add(r+drs[i]*d,c+dcs[i]*d)) break; }
+  if(type==='P'){
+    const dir=white?-1:1,start=white?6:1;
+    if(!board[r+dir]?.[c]){ moves.push({r:r+dir,c}); if(r===start&&!board[r+2*dir]?.[c]) moves.push({r:r+2*dir,c}); }
+    [-1,1].forEach(dc=>{ const t=board[r+dir]?.[c+dc]; if(t&&(t===t.toUpperCase())!==white) moves.push({r:r+dir,c:c+dc}); });
   }
-
-  if (type === 'P') {
-    const dir = isWhite ? -1 : 1;
-    const startRow = isWhite ? 6 : 1;
-    if (!board[r+dir]?.[c]) {
-      moves.push({ r: r+dir, c });
-      if (r === startRow && !board[r+2*dir]?.[c]) moves.push({ r: r+2*dir, c });
-    }
-    [-1,1].forEach(dc => {
-      const t = board[r+dir]?.[c+dc];
-      if (t && (t === t.toUpperCase()) !== isWhite) moves.push({ r: r+dir, c: c+dc });
-    });
-  }
-  else if (type === 'N') {
-    [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => add(r+dr,c+dc));
-  }
-  else if (type === 'B') { slide([-1,-1,1,1],[-1,1,-1,1]); }
-  else if (type === 'R') { slide([-1,1,0,0],[0,0,-1,1]); }
-  else if (type === 'Q') { slide([-1,-1,1,1,0,0,-1,1],[-1,1,-1,1,-1,1,0,0]); }
-  else if (type === 'K') {
-    [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc]) => add(r+dr,c+dc));
-  }
+  else if(type==='N') [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>add(r+dr,c+dc));
+  else if(type==='B') slide([-1,-1,1,1],[-1,1,-1,1]);
+  else if(type==='R') slide([-1,1,0,0],[0,0,-1,1]);
+  else if(type==='Q') slide([-1,-1,1,1,0,0,-1,1],[-1,1,-1,1,-1,1,0,0]);
+  else if(type==='K') [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc])=>add(r+dr,c+dc));
   return moves;
 }
 
-function addMoveToHistory(piece, fr, fc, tr, tc) {
-  const files = 'abcdefgh';
-  const ranks = '87654321';
-  const notation = files[fc] + ranks[fr] + files[tc] + ranks[tr];
-  moveHistory.push(notation);
-
-  const list = document.getElementById('movesList');
-  if (moveHistory.length % 2 === 1) {
-    const pair = document.createElement('div');
-    pair.className = 'move-pair';
-    pair.innerHTML = `<span class="move-num">${Math.ceil(moveHistory.length/2)}.</span><span class="move-w">${notation}</span><span class="move-b" id="move-b-${Math.ceil(moveHistory.length/2)}"></span>`;
+// ═══════════════════════════════════════
+// MOVE HISTORY
+// ═══════════════════════════════════════
+function addMoveToHistory(p,fr,fc,tr,tc){
+  const F='abcdefgh',R='87654321';
+  const n=F[fc]+R[fr]+F[tc]+R[tr];
+  moveHistory.push(n);
+  const list=document.getElementById('movesList');
+  if(moveHistory.length%2===1){
+    const pair=document.createElement('div'); pair.className='move-pair';
+    pair.innerHTML=`<span class="move-num">${Math.ceil(moveHistory.length/2)}.</span><span class="move-w">${n}</span><span class="move-b" id="mb-${Math.ceil(moveHistory.length/2)}"></span>`;
     list.appendChild(pair);
   } else {
-    const b = document.getElementById('move-b-' + Math.ceil(moveHistory.length/2));
-    if (b) b.textContent = notation;
+    const b=document.getElementById('mb-'+Math.ceil(moveHistory.length/2));
+    if(b) b.textContent=n;
   }
-  list.scrollTop = list.scrollHeight;
+  list.scrollTop=list.scrollHeight;
 }
 
-// ── Clock ─────────────────────────────────────────────────────
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m + ':' + (sec < 10 ? '0' : '') + sec;
-}
-
-function startClock() {
+// ═══════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════
+function fmt(s){ return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60; }
+function startClock(){
   stopClock();
-  clockInterval = setInterval(() => {
-    if (turn === myColor) {
-      myTime = Math.max(0, myTime - 1);
-      document.getElementById('myClock').textContent = formatTime(myTime);
-      if (myTime < 30) document.getElementById('myClock').classList.add('low');
-      if (myTime === 0) { socket.emit('time_out', { roomId }); }
+  clockInterval=setInterval(()=>{
+    if(turn===myColor){
+      myTime=Math.max(0,myTime-1);
+      document.getElementById('myClock').textContent=fmt(myTime);
+      if(myTime<30) document.getElementById('myClock').classList.add('low');
+      if(myTime===0) socket.emit('time_out',{roomId});
     } else {
-      oppTime = Math.max(0, oppTime - 1);
-      document.getElementById('oppClock').textContent = formatTime(oppTime);
-      if (oppTime < 30) document.getElementById('oppClock').classList.add('low');
+      oppTime=Math.max(0,oppTime-1);
+      document.getElementById('oppClock').textContent=fmt(oppTime);
+      if(oppTime<30) document.getElementById('oppClock').classList.add('low');
     }
-  }, 1000);
+  },1000);
 }
+function switchClock(){
+  document.getElementById('myBar').classList.toggle('active',turn===myColor);
+  document.getElementById('opponentBar').classList.toggle('active',turn!==myColor);
+}
+function stopClock(){ clearInterval(clockInterval); clockInterval=null; }
 
-function switchClock() {
-  document.getElementById('myBar').classList.toggle('active', turn === myColor);
-  document.getElementById('opponentBar').classList.toggle('active', turn !== myColor);
-}
+// ═══════════════════════════════════════
+// STATUS
+// ═══════════════════════════════════════
+function setStatus(t){ document.getElementById('statusText').textContent=t; }
+function updateStatus(){ setStatus(turn===myColor?'Your turn ('+myColor+')':"Opponent's turn"); }
 
-function stopClock() {
-  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
-}
+// ═══════════════════════════════════════
+// GAME ACTIONS
+// ═══════════════════════════════════════
+function offerDraw(){ socket.emit('offer_draw',{roomId}); toast('Draw offered to opponent.'); }
+function confirmResign(){ document.getElementById('resignOverlay').classList.add('show'); }
+function doResign(){ socket.emit('resign',{roomId}); closeOverlay('resignOverlay'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+function acceptDraw(){ socket.emit('accept_draw',{roomId}); closeOverlay('drawOverlay'); }
+function declineDraw(){ socket.emit('decline_draw',{roomId}); socket.emit('draw_declined_notify',{roomId}); closeOverlay('drawOverlay'); }
 
-// ── Status ────────────────────────────────────────────────────
-function setStatus(text) {
-  document.getElementById('statusText').textContent = text;
-}
-
-function updateStatus() {
-  if (turn === myColor) setStatus('Your turn (' + myColor + ')');
-  else setStatus("Opponent's turn");
-}
-
-// ── Game actions ──────────────────────────────────────────────
-function offerDraw() {
-  socket.emit('offer_draw', { roomId });
-  toast('Draw offered to opponent.');
-}
-
-function confirmResign() {
-  document.getElementById('resignOverlay').classList.add('show');
-}
-function closeResign() {
-  document.getElementById('resignOverlay').classList.remove('show');
-}
-function doResign() {
-  socket.emit('resign', { roomId });
-  closeResign();
-}
-
-function acceptDraw() {
-  socket.emit('accept_draw', { roomId });
-  document.getElementById('drawOverlay').classList.remove('show');
-}
-function declineDraw() {
-  socket.emit('decline_draw', { roomId });
-  document.getElementById('drawOverlay').classList.remove('show');
-  socket.emit('draw_declined_notify', { roomId });
-}
-
-// ── Result ────────────────────────────────────────────────────
-function showResult(reason, winner) {
+function showResult(reason,winner){
   stopClock();
-  const isWin = winner === user?.username;
-  const isDraw = reason === 'draw';
-
-  document.getElementById('resultIcon').textContent = isDraw ? '🤝' : isWin ? '🏆' : '😔';
-  document.getElementById('resultTitle').textContent = isDraw ? 'Draw!' : isWin ? 'You Won!' : 'You Lost';
-
-  const reasonText = {
-    checkmate: 'by checkmate',
-    resign: 'by resignation',
-    timeout: 'on time',
-    draw: 'by agreement',
-    opponent_disconnect: '— opponent disconnected'
-  };
-  document.getElementById('resultSub').textContent =
-    (isDraw ? 'Game drawn' : (isWin ? 'Victory' : 'Defeat')) + ' ' + (reasonText[reason] || '');
-
+  const isWin=winner===user?.username, isDraw=reason==='draw';
+  document.getElementById('resultIcon').textContent =isDraw?'🤝':isWin?'🏆':'😔';
+  document.getElementById('resultTitle').textContent=isDraw?'Draw!':isWin?'You Won!':'You Lost';
+  const R={checkmate:'by checkmate',resign:'by resignation',timeout:'on time',draw:'by agreement',opponent_disconnect:'— opponent disconnected'};
+  document.getElementById('resultSub').textContent=(isDraw?'Game drawn':isWin?'Victory':'Defeat')+' '+(R[reason]||'');
   document.getElementById('resultOverlay').classList.add('show');
 }
 
-// ── Chat ──────────────────────────────────────────────────────
-function sendChatMessage() {
-  const input = document.getElementById('chatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  socket.emit('chat_message', { roomId, text });
-  addChatMessage(user?.username || 'You', text, true);
+// ═══════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════
+function sendChatMessage(){
+  const input=document.getElementById('chatInput');
+  const text=input.value.trim(); if(!text) return;
+  input.value='';
+  socket.emit('chat_message',{roomId,text});
+  addChatMessage(user?.username||'You',text,true);
 }
 
-function addChatMessage(from, text, isMine) {
-  const container = document.getElementById('chatMessages');
-  const empty = document.getElementById('chatEmpty');
-  if (empty) empty.remove();
-
-  const msg = document.createElement('div');
-  msg.className = 'chat-msg ' + (isMine ? 'mine' : 'theirs');
-  msg.innerHTML = `
-    <div class="msg-name">${from}</div>
-    <div class="msg-bubble">${escapeHtml(text)}</div>
-  `;
-  container.appendChild(msg);
-  container.scrollTop = container.scrollHeight;
-
-  // Clear unread badge if mine
-  if (isMine) {
-    const badge = document.getElementById('chatUnread');
-    badge.classList.remove('show');
-    badge.textContent = '0';
-  }
+function addChatMessage(from,text,isMine){
+  const c=document.getElementById('chatMessages');
+  const e=document.getElementById('chatEmpty'); if(e) e.remove();
+  const msg=document.createElement('div');
+  msg.className='chat-msg '+(isMine?'mine':'theirs');
+  msg.innerHTML=`<div class="msg-sender">${esc(from)}</div><div class="msg-bubble">${esc(text)}</div>`;
+  c.appendChild(msg); c.scrollTop=c.scrollHeight;
+  if(isMine){ const b=document.getElementById('chatUnread'); b.classList.remove('show'); b.textContent='0'; }
 }
 
-function escapeHtml(text) {
-  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-// Enter key to send
-document.getElementById('chatInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendChatMessage();
-});
-
-// Clear unread on scroll to bottom
-document.getElementById('chatMessages').addEventListener('scroll', function() {
-  const isAtBottom = this.scrollHeight - this.scrollTop - this.clientHeight < 40;
-  if (isAtBottom) {
-    const badge = document.getElementById('chatUnread');
-    badge.classList.remove('show');
-    badge.textContent = '0';
+document.getElementById('chatSendBtn').addEventListener('click', sendChatMessage);
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChatMessage(); });
+document.getElementById('chatMessages').addEventListener('scroll', function(){
+  if(this.scrollHeight-this.scrollTop-this.clientHeight<40){
+    const b=document.getElementById('chatUnread'); b.classList.remove('show'); b.textContent='0';
   }
 });
 
-// ── Toast ─────────────────────────────────────────────────────
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 3000);
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
 }
 
-// ── Start ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════
+// START
+// ═══════════════════════════════════════
 initBoard();
 switchClock();
-setStatus('Connecting...');
+setStatus('Connecting…');
 </script>
 </body>
 </html>
