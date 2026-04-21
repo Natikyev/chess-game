@@ -370,14 +370,24 @@ io.on('connection', (socket) => {
   // Join room
   socket.on('join_room', ({ roomId, username, color }) => {
     socket.join(roomId);
+    // Always update currentUsername from join_room (covers guest users too)
+    if (username) currentUsername = username;
+
     let room = gameRooms.get(roomId);
     if (!room) {
       // First player arrived — create placeholder
-      room = { white: null, black: null, started: false, joinedSockets: new Set() };
+      room = { white: null, black: null, started: false, joinedSockets: new Set(), socketUsers: new Map() };
       gameRooms.set(roomId, room);
     }
     if (!room.joinedSockets) room.joinedSockets = new Set();
+    if (!room.socketUsers) room.socketUsers = new Map();
     room.joinedSockets.add(socket.id);
+    if (username) {
+      room.socketUsers.set(socket.id, username);
+      // Store color assignment
+      if (color === 'white') room.white = username;
+      else if (color === 'black') room.black = username;
+    }
 
     if (room.joinedSockets.size >= 2 && !room.started) {
       room.started = true;
@@ -402,7 +412,20 @@ io.on('connection', (socket) => {
   socket.on('resign', ({ roomId }) => {
     const room = gameRooms.get(roomId);
     if (!room) return;
-    const winner = room.white === currentUsername ? room.black : room.white;
+    // Determine winner: the player who did NOT resign
+    let loser = currentUsername;
+    if (!loser && room.socketUsers) loser = room.socketUsers.get(socket.id);
+    let winner = null;
+    if (loser) {
+      if (room.white && room.white !== loser) winner = room.white;
+      else if (room.black && room.black !== loser) winner = room.black;
+      else {
+        // fallback: find via socketUsers
+        for (const [sid, uname] of (room.socketUsers || new Map())) {
+          if (sid !== socket.id) { winner = uname; break; }
+        }
+      }
+    }
     io.to(roomId).emit('game_over', { reason: 'resign', winner });
     gameRooms.delete(roomId);
   });
@@ -411,8 +434,43 @@ io.on('connection', (socket) => {
   socket.on('time_out', ({ roomId }) => {
     const room = gameRooms.get(roomId);
     if (!room) return;
-    const winner = room.white === currentUsername ? room.black : room.white;
+    let loser = currentUsername;
+    if (!loser && room.socketUsers) loser = room.socketUsers.get(socket.id);
+    let winner = null;
+    if (loser) {
+      if (room.white && room.white !== loser) winner = room.white;
+      else if (room.black && room.black !== loser) winner = room.black;
+      else {
+        for (const [sid, uname] of (room.socketUsers || new Map())) {
+          if (sid !== socket.id) { winner = uname; break; }
+        }
+      }
+    }
     io.to(roomId).emit('game_over', { reason: 'timeout', winner });
+    gameRooms.delete(roomId);
+  });
+
+  // Checkmate (client-side detection, winner confirmed by client)
+  socket.on('checkmate', ({ roomId, winner }) => {
+    const room = gameRooms.get(roomId);
+    if (!room) return;
+    io.to(roomId).emit('game_over', { reason: 'checkmate', winner });
+    gameRooms.delete(roomId);
+  });
+
+  // Stalemate
+  socket.on('stalemate', ({ roomId }) => {
+    const room = gameRooms.get(roomId);
+    if (!room) return;
+    io.to(roomId).emit('game_over', { reason: 'stalemate', winner: null });
+    gameRooms.delete(roomId);
+  });
+
+  // Threefold repetition
+  socket.on('threefold', ({ roomId }) => {
+    const room = gameRooms.get(roomId);
+    if (!room) return;
+    io.to(roomId).emit('game_over', { reason: 'threefold', winner: null });
     gameRooms.delete(roomId);
   });
 

@@ -331,9 +331,16 @@ socket.on('game_start', () => tryStartGame());
 
 socket.on('opponent_move', data => {
   const fr=data.from.r, fc=data.from.c, tr=data.to.r, tc=data.to.c;
+  // Sync shared state from opponent
+  if (data.enPassantTarget !== undefined) enPassantTarget = data.enPassantTarget;
+  if (data.castleRights    !== undefined) castleRights    = data.castleRights;
+  const p = board[fr][fc] || '?';
+  // Get notation BEFORE applying (board still original)
+  const notation = getMoveNotation(p, fr, fc, tr, tc, data.promotion);
   applyMove(fr, fc, tr, tc, data.promotion);
   turn = turn==='white' ? 'black' : 'white';
-  addMoveToHistory(board[tr][tc]||'?', fr, fc, tr, tc);
+  positionHistory.push(boardKey());
+  addMoveToHistory(notation);
   switchClock(); updateStatus();
 });
 
@@ -410,82 +417,269 @@ function renderBoard(){
   }
 }
 
-function onSquareClick(r,c){
-  if(gameOver||turn!==myColor) return;
-  const p=board[r][c];
-  if(selected){
-    if(legalMoves.some(m=>m.r===r&&m.c===c)){ doMove(selected.r,selected.c,r,c); return; }
-    selected=null; legalMoves=[];
+// ═══════════════════════════════════════
+// FULL CHESS ENGINE
+// ═══════════════════════════════════════
+let castleRights = { wK: true, wQ: true, bK: true, bQ: true };
+let enPassantTarget = null;
+let positionHistory = [];
+
+function boardKey() {
+  return board.map(row => row.map(p => p||'.').join('')).join('/')
+    + '|' + turn[0]
+    + '|' + (castleRights.wK?'K':'') + (castleRights.wQ?'Q':'') + (castleRights.bK?'k':'') + (castleRights.bQ?'q':'')
+    + '|' + (enPassantTarget ? enPassantTarget.r+','+enPassantTarget.c : '-');
+}
+
+function isWhitePiece(p) { return p && p === p.toUpperCase() && p !== p.toLowerCase(); }
+function isBlackPiece(p) { return p && p === p.toLowerCase() && p !== p.toUpperCase(); }
+
+function getAttackedSquares(color, brd) {
+  const attacked = Array.from({length:8}, () => new Array(8).fill(false));
+  const mine = color === 'white' ? isWhitePiece : isBlackPiece;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = brd[r][c];
+      if (!p || !mine(p)) continue;
+      const type = p.toUpperCase();
+      const white = isWhitePiece(p);
+      if (type === 'P') {
+        const dir = white ? -1 : 1;
+        [-1,1].forEach(dc => { const nr=r+dir,nc=c+dc; if(nr>=0&&nr<8&&nc>=0&&nc<8) attacked[nr][nc]=true; });
+      } else if (type === 'N') {
+        [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => {
+          const nr=r+dr,nc=c+dc; if(nr>=0&&nr<8&&nc>=0&&nc<8) attacked[nr][nc]=true;
+        });
+      }
+      if (type === 'B' || type === 'Q') {
+        [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr,dc]) => {
+          for(let d=1;d<8;d++){const nr=r+dr*d,nc=c+dc*d;if(nr<0||nr>7||nc<0||nc>7)break;attacked[nr][nc]=true;if(brd[nr][nc])break;}
+        });
+      }
+      if (type === 'R' || type === 'Q') {
+        [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => {
+          for(let d=1;d<8;d++){const nr=r+dr*d,nc=c+dc*d;if(nr<0||nr>7||nc<0||nc>7)break;attacked[nr][nc]=true;if(brd[nr][nc])break;}
+        });
+      }
+      if (type === 'K') {
+        [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc]) => {
+          const nr=r+dr,nc=c+dc; if(nr>=0&&nr<8&&nc>=0&&nc<8) attacked[nr][nc]=true;
+        });
+      }
+    }
   }
-  if(p){
-    const mine=myColor==='white'?p===p.toUpperCase():p===p.toLowerCase();
-    if(mine){ selected={r,c}; legalMoves=getLegalMoves(r,c); }
+  return attacked;
+}
+
+function findKing(color, brd) {
+  const k = color === 'white' ? 'K' : 'k';
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(brd[r][c]===k) return {r,c};
+  return null;
+}
+
+function isInCheck(color, brd) {
+  const king = findKing(color, brd);
+  if (!king) return false;
+  const opp = color === 'white' ? 'black' : 'white';
+  return getAttackedSquares(opp, brd)[king.r][king.c];
+}
+
+function copyBoard(brd) { return brd.map(row => [...row]); }
+
+function applyMoveToBoard(brd, fr, fc, tr, tc, promo, epTarget) {
+  const b = copyBoard(brd);
+  const p = b[fr][fc]; if (!p) return b;
+  b[tr][tc] = promo || p; b[fr][fc] = null;
+  if ((p==='P'||p==='p') && fc!==tc && !brd[tr][tc]) b[fr][tc] = null;
+  if (p==='K'&&fc===4&&tc===6){b[0][5]='R';b[0][7]=null;}
+  if (p==='K'&&fc===4&&tc===2){b[0][3]='R';b[0][0]=null;}
+  if (p==='k'&&fc===4&&tc===6){b[7][5]='r';b[7][7]=null;}
+  if (p==='k'&&fc===4&&tc===2){b[7][3]='r';b[7][0]=null;}
+  return b;
+}
+
+function getPseudoLegal(r, c, brd, epTarget, cr) {
+  const p = brd[r][c]; if (!p) return [];
+  const moves = [];
+  const white = isWhitePiece(p);
+  const type = p.toUpperCase();
+  const isMine = white ? isWhitePiece : isBlackPiece;
+  const isOpp  = white ? isBlackPiece : isWhitePiece;
+
+  function tryAdd(nr, nc, promo) {
+    if (nr<0||nr>7||nc<0||nc>7) return false;
+    const t = brd[nr][nc];
+    if (t && isMine(t)) return false;
+    moves.push({r:nr, c:nc, promo:promo||null});
+    return !t;
+  }
+
+  if (type === 'P') {
+    const dir = white ? -1 : 1, startRow = white ? 6 : 1;
+    if (r+dir >= 0 && r+dir <= 7 && !brd[r+dir][c]) {
+      const promoRow = (r+dir===0 || r+dir===7);
+      if (promoRow) { ['Q','R','B','N'].forEach(q => moves.push({r:r+dir,c,promo:white?q:q.toLowerCase()})); }
+      else { moves.push({r:r+dir,c,promo:null}); }
+      if (r===startRow && !brd[r+2*dir][c]) moves.push({r:r+2*dir,c,promo:null});
+    }
+    [-1,1].forEach(dc => {
+      const nr=r+dir, nc=c+dc;
+      if (nr<0||nr>7||nc<0||nc>7) return;
+      const t = brd[nr][nc];
+      const promoRow = (nr===0||nr===7);
+      if (t && isOpp(t)) {
+        if (promoRow) { ['Q','R','B','N'].forEach(q => moves.push({r:nr,c:nc,promo:white?q:q.toLowerCase()})); }
+        else moves.push({r:nr,c:nc,promo:null});
+      }
+      if (epTarget && nr===epTarget.r && nc===epTarget.c) moves.push({r:nr,c:nc,promo:null});
+    });
+  }
+  else if (type === 'N') {
+    [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc]) => tryAdd(r+dr,c+dc));
+  }
+  else if (type === 'B' || type === 'Q') {
+    [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr,dc]) => {
+      for(let d=1;d<8;d++) if(!tryAdd(r+dr*d,c+dc*d)) break;
+    });
+  }
+  if (type === 'R' || type === 'Q') {
+    [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => {
+      for(let d=1;d<8;d++) if(!tryAdd(r+dr*d,c+dc*d)) break;
+    });
+  }
+  if (type === 'K') {
+    [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc]) => tryAdd(r+dr,c+dc));
+    const opp = white ? 'black' : 'white';
+    const atk = getAttackedSquares(opp, brd);
+    const rank = white ? 0 : 7;
+    if (r===rank && c===4 && !atk[rank][4]) {
+      if (cr[white?'wK':'bK'] && !brd[rank][5] && !brd[rank][6] && !atk[rank][5] && !atk[rank][6] && brd[rank][7]===(white?'R':'r'))
+        moves.push({r:rank,c:6,promo:null});
+      if (cr[white?'wQ':'bQ'] && !brd[rank][3] && !brd[rank][2] && !brd[rank][1] && !atk[rank][3] && !atk[rank][2] && brd[rank][0]===(white?'R':'r'))
+        moves.push({r:rank,c:2,promo:null});
+    }
+  }
+  return moves;
+}
+
+function getLegalMoves(r, c) {
+  const p = board[r][c]; if (!p) return [];
+  const color = isWhitePiece(p) ? 'white' : 'black';
+  return getPseudoLegal(r, c, board, enPassantTarget, castleRights).filter(m => {
+    const nb = applyMoveToBoard(board, r, c, m.r, m.c, m.promo, enPassantTarget);
+    return !isInCheck(color, nb);
+  });
+}
+
+function hasAnyLegalMove(color) {
+  const mine = color === 'white' ? isWhitePiece : isBlackPiece;
+  for (let r=0;r<8;r++) for (let c=0;c<8;c++) {
+    if (!board[r][c] || !mine(board[r][c])) continue;
+    const moves = getPseudoLegal(r,c,board,enPassantTarget,castleRights);
+    for (const m of moves) {
+      const nb = applyMoveToBoard(board,r,c,m.r,m.c,m.promo,enPassantTarget);
+      if (!isInCheck(color,nb)) return true;
+    }
+  }
+  return false;
+}
+
+function onSquareClick(r, c) {
+  if (gameOver || turn !== myColor) return;
+  const p = board[r][c];
+  if (selected) {
+    const mv = legalMoves.find(m => m.r===r && m.c===c);
+    if (mv) { doMove(selected.r, selected.c, r, c, mv.promo); return; }
+    selected = null; legalMoves = [];
+  }
+  if (p) {
+    const mine = myColor==='white' ? isWhitePiece(p) : isBlackPiece(p);
+    if (mine) { selected={r,c}; legalMoves=getLegalMoves(r,c); }
   }
   renderBoard();
 }
 
-function doMove(fr,fc,tr,tc){
-  const p=board[fr][fc];
-  let promo=null;
-  if(p==='P'&&tr===0) promo='Q';
-  if(p==='p'&&tr===7) promo='q';
-  applyMove(fr,fc,tr,tc,promo);
-  socket.emit('make_move',{roomId,from:{r:fr,c:fc},to:{r:tr,c:tc},promotion:promo});
+function doMove(fr, fc, tr, tc, promo) {
+  const p = board[fr][fc];
+  if (!promo && p==='P' && tr===0) promo='Q';
+  if (!promo && p==='p' && tr===7) promo='q';
+
+  // Get notation BEFORE applying move (board still has original state)
+  const notation = getMoveNotation(p, fr, fc, tr, tc, promo);
+
+  // Update castle rights
+  if (p==='K') { castleRights.wK=false; castleRights.wQ=false; }
+  if (p==='k') { castleRights.bK=false; castleRights.bQ=false; }
+  if (p==='R'&&fr===0&&fc===7) castleRights.wK=false;
+  if (p==='R'&&fr===0&&fc===0) castleRights.wQ=false;
+  if (p==='r'&&fr===7&&fc===7) castleRights.bK=false;
+  if (p==='r'&&fr===7&&fc===0) castleRights.bQ=false;
+
+  // Set new en passant target
+  enPassantTarget = null;
+  if ((p==='P'||p==='p') && Math.abs(tr-fr)===2) enPassantTarget = {r:(fr+tr)/2, c:fc};
+
+  applyMove(fr, fc, tr, tc, promo);
+  socket.emit('make_move', {roomId, from:{r:fr,c:fc}, to:{r:tr,c:tc}, promotion:promo,
+    enPassantTarget, castleRights});
+
   selected=null; legalMoves=[];
-  turn=turn==='white'?'black':'white';
-  addMoveToHistory(p,fr,fc,tr,tc);
+  addMoveToHistory(notation);
+  turn = turn==='white' ? 'black' : 'white';
+  positionHistory.push(boardKey());
+
+  // Check game-ending conditions
+  const opp = turn;
+  const inCheck = isInCheck(opp, board);
+  const hasMove = hasAnyLegalMove(opp);
+  if (!hasMove) {
+    if (inCheck) socket.emit('checkmate', {roomId, winner: myColor});
+    else         socket.emit('stalemate', {roomId});
+    return;
+  }
+  const key = boardKey();
+  if (positionHistory.filter(k=>k===key).length >= 3) {
+    socket.emit('threefold', {roomId}); return;
+  }
   switchClock(); updateStatus();
 }
 
-function applyMove(fr,fc,tr,tc,promo){
-  const p=board[fr][fc]; if(!p) return;
-  board[tr][tc]=promo||p; board[fr][fc]=null;
-  if((p==='P'||p==='p')&&fc!==tc&&!board[tr][tc]) board[fr][tc]=null;
-  if(p==='K'&&fc===4&&tc===6){board[0][5]='R';board[0][7]=null;}
-  if(p==='K'&&fc===4&&tc===2){board[0][3]='R';board[0][0]=null;}
-  if(p==='k'&&fc===4&&tc===6){board[7][5]='r';board[7][7]=null;}
-  if(p==='k'&&fc===4&&tc===2){board[7][3]='r';board[7][0]=null;}
+function applyMove(fr, fc, tr, tc, promo) {
+  const p = board[fr][fc]; if (!p) return;
+  const isEnPassant = (p==='P'||p==='p') && fc!==tc && !board[tr][tc];
+  board[tr][tc] = promo || p; board[fr][fc] = null;
+  if (isEnPassant) board[fr][tc] = null; // remove captured pawn (same row as attacker started)
+  if (p==='K'&&fc===4&&tc===6){board[0][5]='R';board[0][7]=null;}
+  if (p==='K'&&fc===4&&tc===2){board[0][3]='R';board[0][0]=null;}
+  if (p==='k'&&fc===4&&tc===6){board[7][5]='r';board[7][7]=null;}
+  if (p==='k'&&fc===4&&tc===2){board[7][3]='r';board[7][0]=null;}
   lastMove={fr,fc,tr,tc}; renderBoard();
 }
 
-function getLegalMoves(r,c){
-  const p=board[r][c]; if(!p) return [];
-  const moves=[], white=p===p.toUpperCase(), type=p.toUpperCase();
-  function add(nr,nc){
-    if(nr<0||nr>7||nc<0||nc>7) return false;
-    const t=board[nr][nc];
-    if(t){ if((t===t.toUpperCase())!==white) moves.push({r:nr,c:nc}); return false; }
-    moves.push({r:nr,c:nc}); return true;
-  }
-  function slide(drs,dcs){ for(let i=0;i<drs.length;i++) for(let d=1;d<8;d++) if(!add(r+drs[i]*d,c+dcs[i]*d)) break; }
-  if(type==='P'){
-    const dir=white?-1:1,start=white?6:1;
-    if(!board[r+dir]?.[c]){ moves.push({r:r+dir,c}); if(r===start&&!board[r+2*dir]?.[c]) moves.push({r:r+2*dir,c}); }
-    [-1,1].forEach(dc=>{ const t=board[r+dir]?.[c+dc]; if(t&&(t===t.toUpperCase())!==white) moves.push({r:r+dir,c:c+dc}); });
-  }
-  else if(type==='N') [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr,dc])=>add(r+dr,c+dc));
-  else if(type==='B') slide([-1,-1,1,1],[-1,1,-1,1]);
-  else if(type==='R') slide([-1,1,0,0],[0,0,-1,1]);
-  else if(type==='Q') slide([-1,-1,1,1,0,0,-1,1],[-1,1,-1,1,-1,1,0,0]);
-  else if(type==='K') [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc])=>add(r+dr,c+dc));
-  return moves;
+function getMoveNotation(p, fr, fc, tr, tc, promo) {
+  // Called BEFORE applyMove, so board[tr][tc] is still the original target
+  const F='abcdefgh', R='87654321';
+  const type=p.toUpperCase();
+  if (type==='K' && Math.abs(tc-fc)===2) return tc>fc?'O-O':'O-O-O';
+  const capture = !!board[tr][tc] || ((p==='P'||p==='p') && fc!==tc); // normal or en passant
+  let n = (type!=='P'?type:'') + F[fc]+R[fr] + (capture?'x':'') + F[tc]+R[tr];
+  if (promo) n += '='+promo.toUpperCase();
+  return n;
 }
 
 // ═══════════════════════════════════════
 // MOVE HISTORY
 // ═══════════════════════════════════════
-function addMoveToHistory(p,fr,fc,tr,tc){
-  const F='abcdefgh',R='87654321';
-  const n=F[fc]+R[fr]+F[tc]+R[tr];
-  moveHistory.push(n);
+function addMoveToHistory(notation){
+  moveHistory.push(notation);
   const list=document.getElementById('movesList');
   if(moveHistory.length%2===1){
     const pair=document.createElement('div'); pair.className='move-pair';
-    pair.innerHTML=`<span class="move-num">${Math.ceil(moveHistory.length/2)}.</span><span class="move-w">${n}</span><span class="move-b" id="mb-${Math.ceil(moveHistory.length/2)}"></span>`;
+    pair.innerHTML=`<span class="move-num">${Math.ceil(moveHistory.length/2)}.</span><span class="move-w">${notation}</span><span class="move-b" id="mb-${Math.ceil(moveHistory.length/2)}"></span>`;
     list.appendChild(pair);
   } else {
     const b=document.getElementById('mb-'+Math.ceil(moveHistory.length/2));
-    if(b) b.textContent=n;
+    if(b) b.textContent=notation;
   }
   list.scrollTop=list.scrollHeight;
 }
@@ -531,13 +725,29 @@ function closeOverlay(id){ document.getElementById(id).classList.remove('show');
 function acceptDraw(){ socket.emit('accept_draw',{roomId}); closeOverlay('drawOverlay'); }
 function declineDraw(){ socket.emit('decline_draw',{roomId}); socket.emit('draw_declined_notify',{roomId}); closeOverlay('drawOverlay'); }
 
-function showResult(reason,winner){
+function showResult(reason, winner){
   stopClock();
-  const isWin=winner===user?.username, isDraw=reason==='draw';
-  document.getElementById('resultIcon').textContent =isDraw?'🤝':isWin?'🏆':'😔';
-  document.getElementById('resultTitle').textContent=isDraw?'Draw!':isWin?'You Won!':'You Lost';
-  const R={checkmate:'by checkmate',resign:'by resignation',timeout:'on time',draw:'by agreement',opponent_disconnect:'— opponent disconnected'};
-  document.getElementById('resultSub').textContent=(isDraw?'Game drawn':isWin?'Victory':'Defeat')+' '+(R[reason]||'');
+  gameOver = true;
+  const drawReasons = ['draw','stalemate','threefold','fifty_move'];
+  const isDraw = drawReasons.includes(reason);
+  const isWin  = !isDraw && winner && winner === (user?.username || myName);
+  const icons  = { win:'🏆', loss:'😔', draw:'🤝' };
+  const icon   = isDraw ? '🤝' : isWin ? '🏆' : '😔';
+  const title  = isDraw ? 'Draw!' : isWin ? 'You Won!' : 'You Lost';
+  const reasonText = {
+    checkmate:           'by checkmate',
+    resign:              'by resignation',
+    timeout:             'on time',
+    draw:                'by agreement',
+    stalemate:           '— stalemate',
+    threefold:           '— threefold repetition',
+    fifty_move:          '— 50-move rule',
+    opponent_disconnect: '— opponent disconnected'
+  };
+  const outcome = isDraw ? 'Draw' : isWin ? 'Victory' : 'Defeat';
+  document.getElementById('resultIcon').textContent  = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent   = outcome + ' ' + (reasonText[reason]||'');
   document.getElementById('resultOverlay').classList.add('show');
 }
 
