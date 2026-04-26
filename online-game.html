@@ -758,7 +758,7 @@ function sendChatMessage(){
   const input=document.getElementById('chatInput');
   const text=input.value.trim(); if(!text) return;
   input.value='';
-  socket.emit('chat_message',{roomId,text});
+  socket.emit('chat_message',{roomId, text, username: user?.username||'Guest'});
   addChatMessage(user?.username||'You',text,true);
 }
 

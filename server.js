@@ -394,7 +394,14 @@ io.on('connection', (socket) => {
       gameRooms.set(roomId, room);
     }
     if (!room.joinedSockets) room.joinedSockets = new Set();
+    if (!room.socketUsers)  room.socketUsers  = new Map();
     room.joinedSockets.add(socket.id);
+    if (username) {
+      currentUsername = username;
+      room.socketUsers.set(socket.id, username);
+      if (color === 'white') room.white = username;
+      else if (color === 'black') room.black = username;
+    }
 
     if (room.joinedSockets.size >= 2 && !room.started) {
       room.started = true;
@@ -403,16 +410,17 @@ io.on('connection', (socket) => {
   });
 
   // Make move
-  socket.on('make_move', ({ roomId, from, to, promotion }) => {
-    // Broadcast to opponent in room
-    socket.to(roomId).emit('opponent_move', { from, to, promotion });
+  socket.on('make_move', ({ roomId, from, to, promotion, enPassantTarget, castleRights }) => {
+    // Broadcast to opponent — include shared state so rules stay in sync
+    socket.to(roomId).emit('opponent_move', { from, to, promotion, enPassantTarget, castleRights });
   });
 
   // Chat message
-  socket.on('chat_message', ({ roomId, text }) => {
-    if (!text || !currentUsername) return;
+  socket.on('chat_message', ({ roomId, text, username }) => {
+    if (!text) return;
+    const sender = username || currentUsername || 'Guest';
     const clean = text.slice(0, 200);
-    socket.to(roomId).emit('chat_message', { from: currentUsername, text: clean });
+    socket.to(roomId).emit('chat_message', { from: sender, text: clean });
   });
 
   // Resign
