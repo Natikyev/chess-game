@@ -731,10 +731,15 @@ function showResult(reason, winner){
   gameOver = true;
   const drawReasons = ['draw','stalemate','threefold','fifty_move'];
   const isDraw = drawReasons.includes(reason);
-  const isWin  = !isDraw && winner && winner === (user?.username || myName);
-  const icons  = { win:'🏆', loss:'😔', draw:'🤝' };
-  const icon   = isDraw ? '🤝' : isWin ? '🏆' : '😔';
-  const title  = isDraw ? 'Draw!' : isWin ? 'You Won!' : 'You Lost';
+  // winner can be a color ('white'/'black') or a username
+  // Check both: if winner equals myColor OR winner equals my username
+  let isWin = false;
+  if (!isDraw && winner) {
+    if (winner === myColor) isWin = true;
+    else if (user?.username && winner === user.username) isWin = true;
+  }
+  const icon  = isDraw ? '🤝' : isWin ? '🏆' : '😔';
+  const title = isDraw ? 'Draw!' : isWin ? 'You Won!' : 'You Lost';
   const reasonText = {
     checkmate:           'by checkmate',
     resign:              'by resignation',
