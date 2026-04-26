@@ -491,10 +491,10 @@ function applyMoveToBoard(brd, fr, fc, tr, tc, promo, epTarget) {
   const p = b[fr][fc]; if (!p) return b;
   b[tr][tc] = promo || p; b[fr][fc] = null;
   if ((p==='P'||p==='p') && fc!==tc && !brd[tr][tc]) b[fr][tc] = null;
-  if (p==='K'&&fc===4&&tc===6){b[0][5]='R';b[0][7]=null;}
-  if (p==='K'&&fc===4&&tc===2){b[0][3]='R';b[0][0]=null;}
-  if (p==='k'&&fc===4&&tc===6){b[7][5]='r';b[7][7]=null;}
-  if (p==='k'&&fc===4&&tc===2){b[7][3]='r';b[7][0]=null;}
+  if (p==='K'&&fc===4&&tc===6){b[7][5]='R';b[7][7]=null;}
+  if (p==='K'&&fc===4&&tc===2){b[7][3]='R';b[7][0]=null;}
+  if (p==='k'&&fc===4&&tc===6){b[0][5]='r';b[0][7]=null;}
+  if (p==='k'&&fc===4&&tc===2){b[0][3]='r';b[0][0]=null;}
   return b;
 }
 
@@ -551,7 +551,8 @@ function getPseudoLegal(r, c, brd, epTarget, cr) {
     [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc]) => tryAdd(r+dr,c+dc));
     const opp = white ? 'black' : 'white';
     const atk = getAttackedSquares(opp, brd);
-    const rank = white ? 0 : 7;
+    // In this board: row 7 = white back rank, row 0 = black back rank
+    const rank = white ? 7 : 0;
     if (r===rank && c===4 && !atk[rank][4]) {
       if (cr[white?'wK':'bK'] && !brd[rank][5] && !brd[rank][6] && !atk[rank][5] && !atk[rank][6] && brd[rank][7]===(white?'R':'r'))
         moves.push({r:rank,c:6,promo:null});
@@ -610,10 +611,10 @@ function doMove(fr, fc, tr, tc, promo) {
   // Update castle rights
   if (p==='K') { castleRights.wK=false; castleRights.wQ=false; }
   if (p==='k') { castleRights.bK=false; castleRights.bQ=false; }
-  if (p==='R'&&fr===0&&fc===7) castleRights.wK=false;
-  if (p==='R'&&fr===0&&fc===0) castleRights.wQ=false;
-  if (p==='r'&&fr===7&&fc===7) castleRights.bK=false;
-  if (p==='r'&&fr===7&&fc===0) castleRights.bQ=false;
+  if (p==='R'&&fr===7&&fc===7) castleRights.wK=false;
+  if (p==='R'&&fr===7&&fc===0) castleRights.wQ=false;
+  if (p==='r'&&fr===0&&fc===7) castleRights.bK=false;
+  if (p==='r'&&fr===0&&fc===0) castleRights.bQ=false;
 
   // Set new en passant target
   enPassantTarget = null;
@@ -649,10 +650,10 @@ function applyMove(fr, fc, tr, tc, promo) {
   const isEnPassant = (p==='P'||p==='p') && fc!==tc && !board[tr][tc];
   board[tr][tc] = promo || p; board[fr][fc] = null;
   if (isEnPassant) board[fr][tc] = null; // remove captured pawn (same row as attacker started)
-  if (p==='K'&&fc===4&&tc===6){board[0][5]='R';board[0][7]=null;}
-  if (p==='K'&&fc===4&&tc===2){board[0][3]='R';board[0][0]=null;}
-  if (p==='k'&&fc===4&&tc===6){board[7][5]='r';board[7][7]=null;}
-  if (p==='k'&&fc===4&&tc===2){board[7][3]='r';board[7][0]=null;}
+  if (p==='K'&&fc===4&&tc===6){board[7][5]='R';board[7][7]=null;}
+  if (p==='K'&&fc===4&&tc===2){board[7][3]='R';board[7][0]=null;}
+  if (p==='k'&&fc===4&&tc===6){board[0][5]='r';board[0][7]=null;}
+  if (p==='k'&&fc===4&&tc===2){board[0][3]='r';board[0][0]=null;}
   lastMove={fr,fc,tr,tc}; renderBoard();
 }
 
