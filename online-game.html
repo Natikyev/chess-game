@@ -589,8 +589,16 @@ function onSquareClick(r, c) {
   if (gameOver || turn !== myColor) return;
   const p = board[r][c];
   if (selected) {
-    const mv = legalMoves.find(m => m.r===r && m.c===c);
-    if (mv) { doMove(selected.r, selected.c, r, c, mv.promo); return; }
+    // Check if this square has promotion moves
+    const promoMoves = legalMoves.filter(m => m.r===r && m.c===c && m.promo);
+    const normalMove = legalMoves.find(m => m.r===r && m.c===c && !m.promo);
+
+    if (promoMoves.length > 0) {
+      // Show promotion dialog
+      showPromoDialog(selected.r, selected.c, r, c);
+      return;
+    }
+    if (normalMove) { doMove(selected.r, selected.c, r, c, null); return; }
     selected = null; legalMoves = [];
   }
   if (p) {
@@ -600,10 +608,59 @@ function onSquareClick(r, c) {
   renderBoard();
 }
 
+function showPromoDialog(fr, fc, tr, tc) {
+  const white = myColor === 'white';
+  const pieces = white
+    ? [['Q','♛','Vəzir'],['R','♜','Top'],['B','♝','Fil'],['N','♞','At']]
+    : [['q','♛','Vəzir'],['r','♜','Top'],['b','♝','Fil'],['n','♞','At']];
+
+  let modal = document.getElementById('promo-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'promo-modal';
+    modal.style.cssText = `
+      display:none; position:fixed; inset:0; z-index:9999;
+      align-items:center; justify-content:center;
+    `;
+    modal.innerHTML = `
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px)"></div>
+      <div style="position:relative;background:#1e1b18;border:1px solid #4a443f;border-radius:12px;
+                  padding:24px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8);">
+        <div style="font-family:'Playfair Display',serif;color:#d4a843;font-size:1.1rem;margin-bottom:16px;">
+          ♟ Fiqur seçin
+        </div>
+        <div id="promo-btns" style="display:flex;gap:12px;justify-content:center;"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const btns = document.getElementById('promo-btns');
+  btns.innerHTML = '';
+  pieces.forEach(([code, symbol, name]) => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      width:72px;height:80px;background:#2a2520;border:2px solid #4a443f;border-radius:8px;
+      cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:4px;transition:all .15s;font-family:'DM Mono',monospace;
+    `;
+    btn.innerHTML = `<span style="font-size:2rem;color:${white?'#f0ead6':'#1a1815'};text-shadow:0 1px 3px rgba(0,0,0,.5)">${symbol}</span>
+                     <span style="font-size:.55rem;color:#9e9187">${name}</span>`;
+    btn.onmouseenter = () => { btn.style.borderColor='#d4a843'; btn.style.background='rgba(212,168,67,.15)'; };
+    btn.onmouseleave = () => { btn.style.borderColor='#4a443f'; btn.style.background='#2a2520'; };
+    btn.onclick = () => {
+      modal.style.display = 'none';
+      doMove(fr, fc, tr, tc, code);
+    };
+    btns.appendChild(btn);
+  });
+
+  modal.style.display = 'flex';
+}
+
 function doMove(fr, fc, tr, tc, promo) {
   const p = board[fr][fc];
-  if (!promo && p==='P' && tr===0) promo='Q';
-  if (!promo && p==='p' && tr===7) promo='q';
+  // promo always comes from dialog or opponent; no auto-queen needed
 
   // Get notation BEFORE applying move (board still has original state)
   const notation = getMoveNotation(p, fr, fc, tr, tc, promo);
